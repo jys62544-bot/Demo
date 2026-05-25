@@ -345,6 +345,63 @@ a {
   font-weight: 700;
 }
 
+.chat-list {
+  min-height: 360px;
+}
+
+.chat-bubble {
+  max-width: 86%;
+  border-radius: 8px;
+  padding: 14px;
+  white-space: pre-wrap;
+  line-height: 1.7;
+}
+
+.chat-bubble p {
+  margin: 0 0 10px;
+}
+
+.chat-bubble-user {
+  margin-left: auto;
+  background: #dcfce7;
+  color: #064e3b;
+}
+
+.chat-bubble-agent {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.app-shell-admin .chat-bubble-user {
+  background: rgba(34, 197, 94, 0.18);
+  color: #dcfce7;
+}
+
+.app-shell-admin .chat-bubble-agent {
+  background: rgba(30, 41, 59, 0.86);
+  color: #e2e8f0;
+}
+
+.suggestion-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.suggestion-list span {
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: #f0f9ff;
+  color: #075985;
+}
+
+.app-shell-admin .suggestion-list span {
+  border-color: rgba(56, 189, 248, 0.38);
+  background: rgba(14, 165, 233, 0.12);
+  color: #bae6fd;
+}
+
 .dashboard-card-dark .ant-table,
 .dashboard-card-dark .ant-table-thead > tr > th,
 .dashboard-card-dark .ant-table-tbody > tr > td {

@@ -1,8 +1,10 @@
 import type {
   AbnormalCase,
   AgentChatResponse,
+  Contribution,
   DashboardSummary,
   GraphData,
+  KnowledgeItem,
   RankingRow,
   RecentUpload,
   UploadedFile,
@@ -152,6 +154,44 @@ export const mockAbnormalCases: AbnormalCase[] = [
     status: "processing",
     ai_suggestion: "建议停机检查固定螺栓，并记录维修前后声纹变化。",
     created_at: "2026-05-25T08:48:00",
+  },
+];
+
+export const mockKnowledgeItems: KnowledgeItem[] = mockRecentUploads.map((item) => ({
+  id: item.id,
+  title: `${item.device_name} - ${item.process_name} - ${item.title}`,
+  knowledge_type: item.is_abnormal ? "异常案例" : "现场经验",
+  source_file_id: item.id,
+  device_name: item.device_name,
+  process_name: item.process_name,
+  contributor_id: 1,
+  contributor_name: item.uploader_name,
+  tags: item.is_abnormal ? "异常,复核" : "标准操作",
+  status: "pending",
+  summary: `该知识条目来源于 ${item.uploader_name} 上传的 ${item.file_type} 数据。`,
+  created_at: item.created_at,
+}));
+
+export const mockContributions: Contribution[] = [
+  {
+    id: 1,
+    user_id: 1,
+    user_name: "张三",
+    action_type: "upload_abnormal",
+    points: 20,
+    related_file_id: 101,
+    description: "上传高风险异常案例：设备A未闭合安全锁图片",
+    created_at: "2026-05-25T09:30:00",
+  },
+  {
+    id: 2,
+    user_id: 1,
+    user_name: "张三",
+    action_type: "upload_video",
+    points: 15,
+    related_file_id: 102,
+    description: "上传标准操作视频",
+    created_at: "2026-05-24T16:18:00",
   },
 ];
 

@@ -49,6 +49,11 @@ export default function EmployeeUpload() {
     setSubmitting(true);
     setResult(null);
     try {
+      if (values.file_type !== "text" && !fileList[0]?.originFileObj) {
+        message.error("请先选择要上传的文件");
+        return;
+      }
+
       const formData = new FormData();
       Object.entries(values).forEach(([key, value]) => {
         if (value === undefined || value === null) return;

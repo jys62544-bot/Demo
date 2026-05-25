@@ -1,27 +1,35 @@
 import axios from "axios";
 import type {
   AgentChatResponse,
+  AgentAttachment,
   AgentRoleType,
+  AbnormalCase,
+  ContributionListResponse,
   DashboardSummary,
   GraphData,
+  KnowledgeItem,
   ListResponse,
   LoginResponse,
   RankingRow,
   RecentUpload,
   UploadResponse,
+  UploadedFile,
   User,
 } from "../types";
 import {
   createMockUpload,
   demoUsers,
+  mockAbnormalCases,
   mockAgentAnswer,
+  mockContributions,
   mockGraph,
+  mockKnowledgeItems,
   mockRanking,
   mockRecentUploads,
   mockSummary,
 } from "./mockData";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
 const FORCE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
 
 const client = axios.create({
@@ -32,7 +40,7 @@ const client = axios.create({
 export const mediaUrl = (url?: string | null) => {
   if (!url) return "";
   if (url.startsWith("http")) return url;
-  return `${API_BASE_URL}${url}`;
+  return API_BASE_URL ? `${API_BASE_URL}${url}` : url;
 };
 
 const authHeader = () => {
@@ -40,13 +48,21 @@ const authHeader = () => {
   return token ? { Authorization: `Bearer ${token}` } : undefined;
 };
 
+type QueryParams = Record<string, string | number | boolean | undefined | null>;
+
+const query = (params: QueryParams = {}) => {
+  const search = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === "") return;
+    search.set(key, String(value));
+  });
+  const value = search.toString();
+  return value ? `?${value}` : "";
+};
+
 const withMockFallback = async <T>(request: () => Promise<T>, fallback: () => T): Promise<T> => {
   if (FORCE_MOCK) return fallback();
-  try {
-    return await request();
-  } catch {
-    return fallback();
-  }
+  return request();
 };
 
 export const api = {
@@ -80,7 +96,7 @@ export const api = {
     return withMockFallback(
       async () => {
         const response = await client.post<UploadResponse>("/upload", formData, {
-          headers: { ...authHeader(), "Content-Type": "multipart/form-data" },
+          headers: { ...authHeader() },
         });
         return response.data;
       },
@@ -145,6 +161,30 @@ export const api = {
     );
   },
 
+  async files(params: QueryParams = {}): Promise<ListResponse<UploadedFile>> {
+    return withMockFallback(
+      async () => {
+        const response = await client.get<ListResponse<UploadedFile>>(`/files${query(params)}`, {
+          headers: authHeader(),
+        });
+        return response.data;
+      },
+      () => ({ items: mockRecentUploads, total: mockRecentUploads.length }),
+    );
+  },
+
+  async knowledge(params: QueryParams = {}): Promise<ListResponse<KnowledgeItem>> {
+    return withMockFallback(
+      async () => {
+        const response = await client.get<ListResponse<KnowledgeItem>>(`/knowledge${query(params)}`, {
+          headers: authHeader(),
+        });
+        return response.data;
+      },
+      () => ({ items: mockKnowledgeItems, total: mockKnowledgeItems.length }),
+    );
+  },
+
   async ranking(limit = 5): Promise<RankingRow[]> {
     return withMockFallback(
       async () => {
@@ -167,22 +207,44 @@ export const api = {
     );
   },
 
-  async abnormalCases(): Promise<ListResponse<unknown>> {
+  async abnormalCases(params: QueryParams = {}): Promise<ListResponse<AbnormalCase>> {
     return withMockFallback(
       async () => {
-        const response = await client.get<ListResponse<unknown>>("/abnormal-cases?limit=8", { headers: authHeader() });
+        const response = await client.get<ListResponse<AbnormalCase>>(`/abnormal-cases${query(params)}`, {
+          headers: authHeader(),
+        });
         return response.data;
       },
-      () => ({ items: [], total: 0 }),
+      () => ({ items: mockAbnormalCases, total: mockAbnormalCases.length }),
     );
   },
 
-  async agentChat(roleType: AgentRoleType, question: string): Promise<AgentChatResponse> {
+  async contributions(params: QueryParams = {}): Promise<ContributionListResponse> {
+    return withMockFallback(
+      async () => {
+        const response = await client.get<ContributionListResponse>(`/contributions${query(params)}`, {
+          headers: authHeader(),
+        });
+        return response.data;
+      },
+      () => ({
+        items: mockContributions,
+        total: mockContributions.length,
+        total_points: mockContributions.reduce((sum, item) => sum + item.points, 0),
+      }),
+    );
+  },
+
+  async agentChat(
+    roleType: AgentRoleType,
+    question: string,
+    options?: { context?: Record<string, unknown>; attachments?: AgentAttachment[] },
+  ): Promise<AgentChatResponse> {
     return withMockFallback(
       async () => {
         const response = await client.post<AgentChatResponse>(
           "/agent/chat",
-          { role_type: roleType, question, context: {} },
+          { role_type: roleType, question, context: options?.context || {}, attachments: options?.attachments || [] },
           { headers: authHeader() },
         );
         return response.data;

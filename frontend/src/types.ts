@@ -16,6 +16,15 @@ export type AgentRoleType =
   | "quality_supervisor"
   | "management_decision";
 
+export interface AgentAttachment {
+  type: "image_url" | "video_url" | "audio_url";
+  url?: string;
+  file_id?: number;
+  detail?: "auto" | "low" | "high";
+  max_frames?: number;
+  fps?: number;
+}
+
 export interface User {
   id: number;
   username: string;
@@ -103,6 +112,10 @@ export interface ListResponse<T> {
   total: number;
 }
 
+export interface ContributionListResponse extends ListResponse<Contribution> {
+  total_points: number;
+}
+
 export interface DashboardSummary {
   total_files: number;
   today_uploads: number;
@@ -153,6 +166,7 @@ export interface GraphNode {
 export interface GraphLink {
   source: string;
   target: string;
+  label?: string;
   name?: string;
 }
 

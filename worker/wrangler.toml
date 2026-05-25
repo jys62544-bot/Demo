@@ -8,12 +8,12 @@ AGENT_MODE = "proxy"
 AGENT_API_BASE_URL = "https://api.siliconflow.cn/v1"
 AGENT_MODEL = "Qwen/Qwen3-VL-32B-Instruct"
 AGENT_TIMEOUT_SECONDS = "60"
-CORS_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173"
+CORS_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,https://industrial-demo-frontend.pages.dev"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "industrial-demo-db"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "44d7d95e-a911-4de9-bbc9-6dc718966f67"
 migrations_dir = "migrations"
 
 [[r2_buckets]]
