@@ -1,0 +1,8 @@
+.env
+industrial_demo.db
+uploads/*
+!uploads/.gitkeep
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
