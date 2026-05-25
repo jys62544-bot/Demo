@@ -62,6 +62,8 @@ export default function AdminGraph() {
     () => new Set(graph.links.map((link) => link.label || link.name || "关联")).size,
     [graph.links],
   );
+  const mobileRelationRows = useMemo(() => relationRows.slice(0, 10), [relationRows]);
+  const graphHeight = compactGraph ? 430 : 610;
 
   const option = useMemo(
     () => ({
@@ -88,12 +90,14 @@ export default function AdminGraph() {
         {
           top: 0,
           left: 4,
+          right: compactGraph ? 4 : undefined,
+          type: compactGraph ? "scroll" : "plain",
           icon: "circle",
-          itemWidth: 10,
-          itemHeight: 10,
+          itemWidth: compactGraph ? 9 : 10,
+          itemHeight: compactGraph ? 9 : 10,
           data: categories,
           formatter: (name: string) => categoryMeta[name]?.label || name,
-          textStyle: { color: "#cbd5e1", fontSize: 12 },
+          textStyle: { color: "#cbd5e1", fontSize: compactGraph ? 11 : 12 },
         },
       ],
       series: [
@@ -101,17 +105,19 @@ export default function AdminGraph() {
           name: "现场知识网络",
           type: "graph",
           layout: "force",
-          top: 52,
-          bottom: 18,
-          left: 12,
-          right: 12,
+          top: compactGraph ? 62 : 52,
+          bottom: compactGraph ? 8 : 18,
+          left: compactGraph ? 4 : 12,
+          right: compactGraph ? 4 : 12,
           roam: true,
           draggable: true,
           focusNodeAdjacency: true,
           categories: categories.map((name) => ({ name })),
           data: graph.nodes.map((node) => ({
             ...node,
-            symbolSize: node.value || categoryMeta[node.category]?.size || 46,
+            symbolSize: compactGraph
+              ? Math.max(34, Math.round((node.value || categoryMeta[node.category]?.size || 46) * 0.78))
+              : node.value || categoryMeta[node.category]?.size || 46,
             itemStyle: {
               color: categoryMeta[node.category]?.color || "#94a3b8",
               borderColor: "rgba(248, 250, 252, 0.78)",
@@ -166,9 +172,9 @@ export default function AdminGraph() {
           },
           lineStyle: { opacity: 0.64 },
           force: {
-            repulsion: compactGraph ? 290 : 420,
-            gravity: 0.08,
-            edgeLength: compactGraph ? [86, 132] : [120, 190],
+            repulsion: compactGraph ? 230 : 420,
+            gravity: compactGraph ? 0.12 : 0.08,
+            edgeLength: compactGraph ? [76, 112] : [120, 190],
             friction: 0.72,
           },
         },
@@ -203,7 +209,7 @@ export default function AdminGraph() {
             title="电力设备问题关系图"
             extra={<span className="graph-hint">少量关键节点，突出问题链路</span>}
           >
-            {graph.nodes.length ? <ReactECharts option={option} style={{ height: 610 }} /> : <Empty />}
+            {graph.nodes.length ? <ReactECharts option={option} style={{ height: graphHeight }} /> : <Empty />}
           </Card>
         </Col>
         <Col xs={24} xl={7}>
@@ -230,18 +236,42 @@ export default function AdminGraph() {
           </Card>
         </Col>
       </Row>
-      <Card className="dashboard-card-dark section-spacing" title="关系明细">
-        <Table
-          rowKey="key"
-          size="middle"
-          dataSource={relationRows}
-          pagination={{ pageSize: 6 }}
-          columns={[
-            { title: "起点", dataIndex: "sourceName" },
-            { title: "关系", dataIndex: "relation", width: 140, render: (value: string) => <Tag color="gold">{value}</Tag> },
-            { title: "终点", dataIndex: "targetName" },
-          ]}
-        />
+      <Card
+        className="dashboard-card-dark section-spacing"
+        title={compactGraph ? "关键关系链路" : "关系明细"}
+        extra={compactGraph ? <span className="graph-hint">显示前 {mobileRelationRows.length} 条</span> : null}
+      >
+        {compactGraph ? (
+          <div className="graph-relation-list">
+            {mobileRelationRows.map((row) => (
+              <div className="graph-relation-card" key={row.key}>
+                <Typography.Text className="graph-relation-node" strong>
+                  {row.sourceName}
+                </Typography.Text>
+                <div className="graph-relation-link">
+                  <span />
+                  <Tag color="gold">{row.relation}</Tag>
+                </div>
+                <Typography.Text className="graph-relation-node graph-relation-target" strong>
+                  {row.targetName}
+                </Typography.Text>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <Table
+            className="graph-relation-table"
+            rowKey="key"
+            size="middle"
+            dataSource={relationRows}
+            pagination={{ pageSize: 6 }}
+            columns={[
+              { title: "起点", dataIndex: "sourceName" },
+              { title: "关系", dataIndex: "relation", width: 140, render: (value: string) => <Tag color="gold">{value}</Tag> },
+              { title: "终点", dataIndex: "targetName" },
+            ]}
+          />
+        )}
       </Card>
     </AppShell>
   );

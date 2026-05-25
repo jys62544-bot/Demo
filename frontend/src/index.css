@@ -689,6 +689,10 @@ a {
   overflow-x: auto;
 }
 
+.dashboard-card-dark .ant-table {
+  min-width: 680px;
+}
+
 .graph-visual-card.ant-card .ant-card-body {
   padding: 16px 18px 12px;
 }
@@ -733,6 +737,48 @@ a {
   border-radius: 8px;
   background: rgba(15, 23, 42, 0.78);
   font-size: 18px;
+}
+
+.graph-relation-list {
+  display: grid;
+  gap: 10px;
+}
+
+.graph-relation-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(30, 41, 59, 0.68);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.graph-relation-node.ant-typography {
+  color: #f8fafc !important;
+  line-height: 1.55;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+.graph-relation-target.ant-typography {
+  color: #bfdbfe !important;
+}
+
+.graph-relation-link {
+  display: grid;
+  grid-template-columns: minmax(24px, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.graph-relation-link span {
+  height: 1px;
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.75), rgba(251, 191, 36, 0.06));
+}
+
+.graph-relation-link .ant-tag {
+  margin: 0;
+  white-space: nowrap;
 }
 
 @media (max-width: 900px) {
@@ -853,8 +899,38 @@ a {
     overflow-x: auto;
   }
 
-  .graph-visual-card .echarts-for-react {
-    height: 480px !important;
+  .ant-table-wrapper .ant-table {
+    min-width: 680px;
+  }
+
+  .ant-table-wrapper .ant-table-cell {
+    white-space: nowrap;
+    word-break: keep-all;
+  }
+
+  .dashboard-card-dark .ant-table-wrapper {
+    margin: 0 -2px;
+  }
+
+  .graph-visual-card.ant-card .ant-card-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .graph-visual-card.ant-card .ant-card-extra {
+    margin-left: 0;
+  }
+
+  .graph-visual-card.ant-card .ant-card-body {
+    padding: 10px 8px 8px;
+  }
+
+  .graph-hint {
+    display: block;
+    line-height: 1.5;
   }
 
   .graph-category-item {
