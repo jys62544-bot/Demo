@@ -39,41 +39,101 @@ export default function AdminDashboard() {
 
   const trendOption = {
     backgroundColor: "transparent",
-    tooltip: { trigger: "axis" },
-    legend: { textStyle: { color: "#cbd5e1" } },
-    grid: { left: 36, right: 20, top: 36, bottom: 26 },
+    color: ["#38bdf8", "#22c55e", "#f97316"],
+    tooltip: {
+      trigger: "axis",
+      confine: true,
+      backgroundColor: "rgba(15, 23, 42, 0.94)",
+      borderColor: "rgba(148, 163, 184, 0.28)",
+      textStyle: { color: "#e2e8f0" },
+      axisPointer: {
+        type: "line",
+        lineStyle: { color: "rgba(125, 211, 252, 0.44)", width: 1 },
+      },
+    },
+    legend: {
+      top: 0,
+      right: 8,
+      icon: "roundRect",
+      itemWidth: 18,
+      itemHeight: 8,
+      textStyle: { color: "#cbd5e1", fontSize: 13 },
+    },
+    grid: { left: 44, right: 24, top: 58, bottom: 38, containLabel: true },
     xAxis: {
       type: "category",
+      boundaryGap: true,
       data: summary?.daily_trend.map((item) => item.date.slice(5)) || [],
-      axisLine: { lineStyle: { color: "#475569" } },
-      axisLabel: { color: "#94a3b8" },
+      axisLine: { lineStyle: { color: "rgba(148, 163, 184, 0.34)" } },
+      axisTick: { show: false },
+      axisLabel: { color: "#94a3b8", margin: 14, fontSize: 12 },
     },
     yAxis: {
       type: "value",
-      splitLine: { lineStyle: { color: "rgba(148,163,184,0.14)" } },
-      axisLabel: { color: "#94a3b8" },
+      minInterval: 1,
+      splitNumber: 4,
+      splitLine: { lineStyle: { color: "rgba(148,163,184,0.13)", type: "dashed" } },
+      axisLabel: { color: "#94a3b8", margin: 12 },
     },
     series: [
       {
         name: "上传",
         type: "line",
         smooth: true,
+        symbol: "circle",
+        symbolSize: 7,
+        showSymbol: true,
+        z: 4,
         data: summary?.daily_trend.map((item) => item.uploads) || [],
         lineStyle: { color: "#38bdf8", width: 3 },
-        areaStyle: { color: "rgba(56,189,248,0.14)" },
+        itemStyle: { color: "#38bdf8", borderColor: "#dbeafe", borderWidth: 2 },
+        areaStyle: {
+          color: {
+            type: "linear",
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: "rgba(56,189,248,0.24)" },
+              { offset: 1, color: "rgba(56,189,248,0.02)" },
+            ],
+          },
+        },
       },
       {
         name: "知识",
         type: "line",
         smooth: true,
+        symbol: "circle",
+        symbolSize: 7,
+        showSymbol: true,
+        z: 5,
         data: summary?.daily_trend.map((item) => item.knowledge) || [],
         lineStyle: { color: "#22c55e", width: 3 },
+        itemStyle: { color: "#22c55e", borderColor: "#ecfccb", borderWidth: 2 },
       },
       {
         name: "异常",
         type: "bar",
+        barWidth: 28,
+        barMaxWidth: 36,
+        z: 2,
         data: summary?.daily_trend.map((item) => item.abnormal) || [],
-        itemStyle: { color: "#f97316", borderRadius: [4, 4, 0, 0] },
+        itemStyle: {
+          borderRadius: [7, 7, 0, 0],
+          color: {
+            type: "linear",
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: "#fb923c" },
+              { offset: 1, color: "#ea580c" },
+            ],
+          },
+        },
       },
     ],
   };
@@ -92,7 +152,7 @@ export default function AdminDashboard() {
         <Row gutter={[16, 16]} className="section-spacing">
           <Col xs={24} xl={15}>
             <Card className="dashboard-card-dark" title="7 天趋势">
-              {summary ? <ReactECharts option={trendOption} style={{ height: 320 }} /> : <Empty />}
+              {summary ? <ReactECharts option={trendOption} style={{ height: 360 }} /> : <Empty />}
             </Card>
           </Col>
           <Col xs={24} xl={9}>
@@ -135,7 +195,7 @@ export default function AdminDashboard() {
           </Col>
           <Col xs={24} xl={9}>
             <Card className="dashboard-card-dark" title="贡献排行 TOP 5">
-              <Space direction="vertical" size={12} className="full-width">
+              <Space orientation="vertical" size={12} className="full-width">
                 {ranking.map((row) => (
                   <div className="ranking-row" key={row.user_id}>
                     <span className="rank-no">{row.rank}</span>

@@ -1,5 +1,5 @@
 import { InboxOutlined } from "@ant-design/icons";
-import { Alert, Button, Card, Col, Form, Input, Row, Select, Switch, Upload, message } from "antd";
+import { Alert, App as AntApp, Button, Card, Col, Form, Input, Row, Select, Switch, Upload } from "antd";
 import type { UploadFile } from "antd";
 import { useState } from "react";
 import { api } from "../../api/client";
@@ -42,6 +42,7 @@ export default function EmployeeUpload() {
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<UploadResponse | null>(null);
+  const { message } = AntApp.useApp();
   const fileType = Form.useWatch("file_type", form);
   const isAbnormal = Form.useWatch("is_abnormal", form);
 

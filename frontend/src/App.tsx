@@ -3,10 +3,16 @@ import type { ReactElement } from "react";
 import { useAuth } from "./store/useAuth";
 import type { UserRole } from "./types";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminAbnormal from "./pages/admin/AdminAbnormal";
+import AdminDecisionAgent from "./pages/admin/AdminDecisionAgent";
+import AdminGraph from "./pages/admin/AdminGraph";
+import AdminKnowledge from "./pages/admin/AdminKnowledge";
+import AdminRanking from "./pages/admin/AdminRanking";
+import EmployeeAssistant from "./pages/employee/EmployeeAssistant";
+import EmployeeContribution from "./pages/employee/EmployeeContribution";
 import EmployeeDashboard from "./pages/employee/EmployeeDashboard";
 import EmployeeUpload from "./pages/employee/EmployeeUpload";
 import LoginPage from "./pages/LoginPage";
-import PlaceholderPage from "./pages/PlaceholderPage";
 
 function RequireAuth({ role, children }: { role: UserRole; children: ReactElement }) {
   const { user } = useAuth();
@@ -48,7 +54,7 @@ export default function App() {
         path="/employee/assistant"
         element={
           <RequireAuth role="employee">
-            <PlaceholderPage scope="employee" title="AI 助手" />
+            <EmployeeAssistant />
           </RequireAuth>
         }
       />
@@ -56,7 +62,7 @@ export default function App() {
         path="/employee/contribution"
         element={
           <RequireAuth role="employee">
-            <PlaceholderPage scope="employee" title="我的贡献" />
+            <EmployeeContribution />
           </RequireAuth>
         }
       />
@@ -68,26 +74,47 @@ export default function App() {
           </RequireAuth>
         }
       />
-      {["knowledge", "graph", "abnormal", "ranking", "decision-agent"].map((page) => (
-        <Route
-          key={page}
-          path={`/admin/${page}`}
-          element={
-            <RequireAuth role="admin">
-              <PlaceholderPage scope="admin" title={adminTitles[page]} />
-            </RequireAuth>
-          }
-        />
-      ))}
+      <Route
+        path="/admin/knowledge"
+        element={
+          <RequireAuth role="admin">
+            <AdminKnowledge />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/admin/graph"
+        element={
+          <RequireAuth role="admin">
+            <AdminGraph />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/admin/abnormal"
+        element={
+          <RequireAuth role="admin">
+            <AdminAbnormal />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/admin/ranking"
+        element={
+          <RequireAuth role="admin">
+            <AdminRanking />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/admin/decision-agent"
+        element={
+          <RequireAuth role="admin">
+            <AdminDecisionAgent />
+          </RequireAuth>
+        }
+      />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
-
-const adminTitles: Record<string, string> = {
-  knowledge: "知识库",
-  graph: "知识图谱",
-  abnormal: "异常案例",
-  ranking: "贡献排行榜",
-  "decision-agent": "Agent 决策",
-};

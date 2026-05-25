@@ -2,12 +2,16 @@ import axios from "axios";
 import type {
   AgentChatResponse,
   AgentRoleType,
+  AbnormalCase,
+  Contribution,
   DashboardSummary,
   GraphData,
+  KnowledgeItem,
   ListResponse,
   LoginResponse,
   RankingRow,
   RecentUpload,
+  UploadedFile,
   UploadResponse,
   User,
 } from "../types";
@@ -15,7 +19,11 @@ import {
   createMockUpload,
   demoUsers,
   mockAgentAnswer,
+  mockAbnormalCases,
+  mockContributions,
+  mockFiles,
   mockGraph,
+  mockKnowledgeItems,
   mockRanking,
   mockRecentUploads,
   mockSummary,
@@ -167,13 +175,55 @@ export const api = {
     );
   },
 
-  async abnormalCases(): Promise<ListResponse<unknown>> {
+  async files(): Promise<ListResponse<UploadedFile>> {
     return withMockFallback(
       async () => {
-        const response = await client.get<ListResponse<unknown>>("/abnormal-cases?limit=8", { headers: authHeader() });
+        const response = await client.get<ListResponse<UploadedFile>>("/files?limit=20", { headers: authHeader() });
         return response.data;
       },
-      () => ({ items: [], total: 0 }),
+      () => ({ items: mockFiles, total: mockFiles.length }),
+    );
+  },
+
+  async knowledge(): Promise<ListResponse<KnowledgeItem>> {
+    return withMockFallback(
+      async () => {
+        const response = await client.get<ListResponse<KnowledgeItem>>("/knowledge?limit=20", {
+          headers: authHeader(),
+        });
+        return response.data;
+      },
+      () => ({ items: mockKnowledgeItems, total: mockKnowledgeItems.length }),
+    );
+  },
+
+  async abnormalCases(): Promise<ListResponse<AbnormalCase>> {
+    return withMockFallback(
+      async () => {
+        const response = await client.get<ListResponse<AbnormalCase>>("/abnormal-cases?limit=20", {
+          headers: authHeader(),
+        });
+        return response.data;
+      },
+      () => ({ items: mockAbnormalCases, total: mockAbnormalCases.length }),
+    );
+  },
+
+  async contributions(userId?: number): Promise<{ items: Contribution[]; total: number; total_points: number }> {
+    const query = userId ? `?user_id=${userId}` : "";
+    return withMockFallback(
+      async () => {
+        const response = await client.get<{ items: Contribution[]; total: number; total_points: number }>(
+          `/contributions${query}`,
+          { headers: authHeader() },
+        );
+        return response.data;
+      },
+      () => ({
+        items: mockContributions,
+        total: mockContributions.length,
+        total_points: mockContributions.reduce((sum, item) => sum + item.points, 0),
+      }),
     );
   },
 
