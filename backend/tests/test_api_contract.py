@@ -16,6 +16,8 @@ sys.path.insert(0, str(BACKEND_ROOT))
 main = importlib.import_module("main")
 
 from fastapi.testclient import TestClient  # noqa: E402
+from app.database import SessionLocal  # noqa: E402
+from app.models import User  # noqa: E402
 
 
 client = TestClient(main.app)
@@ -47,6 +49,28 @@ def test_login_and_profile_follow_demo_token_contract():
 
     assert profile_response.status_code == 200
     assert profile_response.json()["username"] == "employee"
+
+
+def test_demo_access_key_login_works_with_existing_legacy_password_rows():
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.username == "employee").one()
+        original_password = user.password
+        user.password = "123456"
+        db.commit()
+
+        login_response = client.post(
+            "/api/auth/login",
+            json={"username": "employee", "password": "Demo@2026#IM-Safe"},
+        )
+
+        assert login_response.status_code == 200
+        login_data = login_response.json()
+        assert login_data["token"] == "demo-token-employee"
+    finally:
+        user.password = original_password
+        db.commit()
+        db.close()
 
 
 def test_abnormal_upload_creates_file_knowledge_score_and_case():

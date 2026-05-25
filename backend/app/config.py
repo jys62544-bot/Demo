@@ -13,6 +13,7 @@ class Settings:
     database_url: str = os.getenv("DATABASE_URL", "sqlite:///./industrial_demo.db")
     upload_dir: str = os.getenv("UPLOAD_DIR", "uploads")
     max_upload_size_mb: int = int(os.getenv("MAX_UPLOAD_SIZE_MB", "200"))
+    demo_access_key: str = os.getenv("DEMO_ACCESS_KEY", "Demo@2026#IM-Safe")
     agent_mode: str = os.getenv("AGENT_MODE", "mock")
     agent_api_base_url: str = os.getenv("AGENT_API_BASE_URL", "https://api.openai.com/v1")
     agent_api_key: str = os.getenv("AGENT_API_KEY", "")
