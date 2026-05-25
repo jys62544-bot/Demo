@@ -10,29 +10,29 @@ from app.time_utils import utc_now
 
 
 USERS = [
-    {"username": "employee", "password": "123456", "role": "employee", "name": "张三", "department": "一号产线", "position": "设备操作员"},
-    {"username": "admin", "password": "123456", "role": "admin", "name": "李经理", "department": "生产管理部", "position": "管理人员"},
-    {"username": "worker2", "password": "123456", "role": "employee", "name": "王师傅", "department": "二号产线", "position": "资深操作员"},
-    {"username": "worker3", "password": "123456", "role": "employee", "name": "赵工", "department": "维修班组", "position": "维修工程师"},
-    {"username": "worker4", "password": "123456", "role": "employee", "name": "刘班长", "department": "一号产线", "position": "班组长"},
+    {"username": "employee", "password": "Demo@2026#IM-Safe", "role": "employee", "name": "张三", "department": "集控运行一值", "position": "巡检操作员"},
+    {"username": "admin", "password": "Demo@2026#IM-Safe", "role": "admin", "name": "李经理", "department": "发电运行部", "position": "运行值长"},
+    {"username": "worker2", "password": "Demo@2026#IM-Safe", "role": "employee", "name": "王师傅", "department": "电气检修班", "position": "资深电气检修工"},
+    {"username": "worker3", "password": "Demo@2026#IM-Safe", "role": "employee", "name": "赵工", "department": "继电保护班", "position": "继保工程师"},
+    {"username": "worker4", "password": "Demo@2026#IM-Safe", "role": "employee", "name": "刘班长", "department": "锅炉运行二值", "position": "运行班长"},
 ]
 
-DEVICES = ["设备A", "设备B", "设备C", "设备D"]
-PROCESSES = ["开机检查", "上料操作", "运行监控", "异常停机处理", "产品质检", "设备维护", "安全复核"]
+DEVICES = ["1号主变压器", "6kV厂用开关柜", "汽轮机给水泵", "锅炉引风机", "脱硫循环泵", "继电保护屏"]
+PROCESSES = ["红外测温巡检", "倒闸操作", "运行参数监盘", "异常缺陷处理", "保护压板核对", "润滑油系统点检", "电缆沟安全巡检"]
 
 NORMAL_SCENES = [
-    ("standard_operation", "video", "标准作业流程"),
-    ("training_experience", "audio", "培训经验记录"),
-    ("maintenance_record", "document", "维护经验"),
-    ("quality_inspection", "image", "质检记录"),
-    ("other", "text", "现场补充说明"),
+    ("standard_operation", "video", "标准倒闸操作视频"),
+    ("training_experience", "audio", "运行经验口述记录"),
+    ("maintenance_record", "document", "检修消缺记录"),
+    ("quality_inspection", "image", "红外测温记录"),
+    ("other", "text", "巡检补充说明"),
 ]
 
 ABNORMAL_SCENES = [
-    ("abnormal_operation", "image", "安全锁异常图片", "high"),
-    ("fault_case", "document", "异常停机处理记录", "medium"),
-    ("abnormal_operation", "video", "错误操作视频", "critical"),
-    ("quality_inspection", "image", "产品划痕质检图片", "low"),
+    ("abnormal_operation", "image", "套管温升异常图片", "high"),
+    ("fault_case", "document", "辅机跳闸处理记录", "medium"),
+    ("abnormal_operation", "video", "倒闸操作票执行偏差视频", "critical"),
+    ("quality_inspection", "image", "电缆沟积水隐患图片", "low"),
 ]
 
 
@@ -83,7 +83,7 @@ def _seed_uploads(db: Session, users: list[User]) -> None:
             is_abnormal=1 if is_abnormal else 0,
             risk_level=risk_level,
             tags=_tags_for(scene_type, device, process),
-            description=f"{device}在{process}环节的{suffix}，用于演示数据沉淀闭环。",
+            description=f"{device}在{process}环节的{suffix}，用于演示电力工厂运行、巡检、消缺和知识沉淀闭环。",
             text_content=text_content,
             created_at=now - timedelta(days=index % 10, hours=index % 7),
         )
@@ -108,7 +108,7 @@ def _seed_uploads(db: Session, users: list[User]) -> None:
 
 def _make_seed_file(index: int, title: str, file_type: str) -> tuple[str | None, str | None, str | None, str | None]:
     if file_type == "text":
-        return None, None, None, f"{title}：该文本经验用于说明现场操作注意事项。"
+        return None, None, None, f"{title}：该文本经验用于说明电力设备巡检注意事项、复核要点和风险边界。"
 
     extension = {
         "video": ".mp4",
@@ -119,7 +119,7 @@ def _make_seed_file(index: int, title: str, file_type: str) -> tuple[str | None,
     storage_key = f"seed_{index + 1:02d}{extension}"
     file_path = settings.upload_dir_path / storage_key
     if not file_path.exists():
-        file_path.write_bytes(f"seed placeholder for {title}".encode("utf-8"))
+        file_path.write_bytes(f"power plant seed placeholder for {title}".encode("utf-8"))
     return storage_key, f"/uploads/{storage_key}", storage_key, None
 
 
@@ -151,8 +151,8 @@ def _seed_agent_messages(db: Session, users: list[User]) -> None:
             AgentMessage(
                 user_id=user.id,
                 role_type=role_type,
-                question=f"演示问题 {index + 1}",
-                answer="这是用于大屏统计的历史 Agent mock 对话。",
+                question=f"电力巡检演示问题 {index + 1}",
+                answer="这是用于大屏统计的电力工厂历史 Agent mock 对话。",
                 mode="mock",
                 created_at=utc_now() - timedelta(days=index % 7),
             )

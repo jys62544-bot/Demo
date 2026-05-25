@@ -3,6 +3,7 @@ import { Alert, Button, Card, Col, Form, Input, Row, Select, Space, Tag, Upload,
 import type { UploadFile } from "antd";
 import { useState } from "react";
 import { api } from "../api/client";
+import AgentMarkdown from "../components/AgentMarkdown";
 import AppShell from "../layouts/AppShell";
 import type { AgentAttachment, AgentChatResponse, AgentRoleType, FileType } from "../types";
 
@@ -100,10 +101,10 @@ export default function AgentChatPage({ scope, title, defaultRole }: AgentChatPa
                 role_type: defaultRole,
                 question:
                   scope === "admin"
-                    ? "根据最近异常和贡献排行，今天管理端应该优先关注什么？"
-                    : "设备A开机前需要检查什么？",
-                device_name: "设备A",
-                process_name: "开机检查",
+                    ? "根据最近电力设备异常和贡献排行，今天管理端应该优先关注什么？"
+                    : "1号主变压器红外测温前需要检查什么？",
+                device_name: "1号主变压器",
+                process_name: "红外测温巡检",
               }}
               onFinish={onFinish}
             >
@@ -154,7 +155,7 @@ export default function AgentChatPage({ scope, title, defaultRole }: AgentChatPa
 function ChatBubble({ item }: { item: ChatItem }) {
   return (
     <div className={item.side === "user" ? "chat-bubble chat-bubble-user" : "chat-bubble chat-bubble-agent"}>
-      <p>{item.text}</p>
+      {item.side === "assistant" ? <AgentMarkdown content={item.text} /> : <p>{item.text}</p>}
       {item.response ? (
         <Space direction="vertical" size={8} className="full-width">
           <Tag color={item.response.mode === "proxy" ? "green" : "gold"}>{item.response.mode}</Tag>

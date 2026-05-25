@@ -28,7 +28,7 @@ def auth_headers(username: str = "employee") -> dict[str, str]:
 def test_login_and_profile_follow_demo_token_contract():
     login_response = client.post(
         "/api/auth/login",
-        json={"username": "employee", "password": "123456"},
+        json={"username": "employee", "password": "Demo@2026#IM-Safe"},
     )
 
     assert login_response.status_code == 200
@@ -39,8 +39,8 @@ def test_login_and_profile_follow_demo_token_contract():
         "username": "employee",
         "name": "张三",
         "role": "employee",
-        "department": "一号产线",
-        "position": "设备操作员",
+        "department": "集控运行一值",
+        "position": "巡检操作员",
     }
 
     profile_response = client.get("/api/user/profile", headers=auth_headers())
@@ -56,28 +56,28 @@ def test_abnormal_upload_creates_file_knowledge_score_and_case():
         "/api/upload",
         headers=auth_headers(),
         data={
-            "title": "设备A未闭合安全锁图片",
+            "title": "1号主变压器套管红外测温异常图片",
             "file_type": "image",
-            "device_name": "设备A",
-            "process_name": "开机检查",
+            "device_name": "1号主变压器",
+            "process_name": "红外测温巡检",
             "scene_type": "abnormal_operation",
             "is_abnormal": "1",
             "risk_level": "high",
-            "tags": "安全锁,开机,异常",
-            "description": "安全锁未闭合",
+            "tags": "主变,套管,红外测温,温升异常",
+            "description": "高压套管接头温度较历史值偏高",
         },
-        files={"file": ("lock.png", b"fake image bytes", "image/png")},
+        files={"file": ("thermal.png", b"fake image bytes", "image/png")},
     )
 
     assert response.status_code == 200
     data = response.json()
     assert data["message"] == "上传成功"
-    assert data["file"]["title"] == "设备A未闭合安全锁图片"
+    assert data["file"]["title"] == "1号主变压器套管红外测温异常图片"
     assert data["file"]["file_type"] == "image"
     assert data["file"]["file_url"].startswith("/uploads/")
     assert data["file"]["is_abnormal"] is True
     assert data["file"]["risk_level"] == "high"
-    assert data["knowledge_item"]["title"] == "设备A - 开机检查 - 设备A未闭合安全锁图片"
+    assert data["knowledge_item"]["title"] == "1号主变压器 - 红外测温巡检 - 1号主变压器套管红外测温异常图片"
     assert data["knowledge_item"]["status"] == "pending"
     assert data["abnormal_case"]["risk_level"] == "high"
     assert data["abnormal_case"]["status"] == "pending"
@@ -92,11 +92,11 @@ def test_abnormal_upload_creates_file_knowledge_score_and_case():
     assert after_summary["total_knowledge"] == before_summary["total_knowledge"] + 1
     assert after_summary["total_abnormal"] == before_summary["total_abnormal"] + 1
 
-    files = client.get("/api/files?keyword=安全锁&is_abnormal=1", headers=auth_headers()).json()
+    files = client.get("/api/files?keyword=主变&is_abnormal=1", headers=auth_headers()).json()
     assert files["total"] >= 1
     assert files["items"][0]["is_abnormal"] is True
 
-    knowledge = client.get("/api/knowledge?keyword=安全锁", headers=auth_headers()).json()
+    knowledge = client.get("/api/knowledge?keyword=主变", headers=auth_headers()).json()
     assert knowledge["total"] >= 1
     assert knowledge["items"][0]["knowledge_type"] == "异常案例"
 
@@ -114,16 +114,16 @@ def test_text_upload_does_not_require_file_and_generates_knowledge():
         "/api/upload",
         headers=auth_headers(),
         data={
-            "title": "设备B运行监控经验",
+            "title": "汽轮机给水泵运行监听经验",
             "file_type": "text",
-            "device_name": "设备B",
+            "device_name": "汽轮机给水泵",
             "process_name": "运行监控",
             "scene_type": "training_experience",
             "is_abnormal": "0",
             "risk_level": "none",
-            "tags": "巡检,经验",
-            "description": "班前巡检经验记录",
-            "text_content": "先检查报警面板，再确认润滑状态。",
+            "tags": "给水泵,运行监听,经验",
+            "description": "电力辅机运行监听经验记录",
+            "text_content": "先检查轴承温度和振动趋势，再确认润滑油压状态。",
         },
     )
 
@@ -137,36 +137,36 @@ def test_text_upload_does_not_require_file_and_generates_knowledge():
 
 
 def test_text_like_document_upload_extracts_content_into_database():
-    document_text = "设备A安全锁检查规范\n1. 开机前确认安全锁闭合。\n2. 异常时通知班组长。"
+    document_text = "1号主变压器红外测温规范\n1. 巡检前确认测温仪电量和发射率设置。\n2. 温升异常时通知值长和电气检修班。"
     response = client.post(
         "/api/upload",
         headers=auth_headers(),
         data={
-            "title": "设备A安全锁检查规范",
+            "title": "1号主变压器红外测温规范",
             "file_type": "document",
-            "device_name": "设备A",
-            "process_name": "开机检查",
+            "device_name": "1号主变压器",
+            "process_name": "红外测温巡检",
             "scene_type": "standard_operation",
             "is_abnormal": "0",
             "risk_level": "none",
-            "tags": "安全锁,SOP,开机",
+            "tags": "主变,SOP,红外测温",
             "description": "文本型文档应提取正文用于知识沉淀",
         },
-        files={"file": ("safety-lock.md", document_text.encode("utf-8"), "text/markdown")},
+        files={"file": ("transformer-thermal.md", document_text.encode("utf-8"), "text/markdown")},
     )
 
     assert response.status_code == 200
     data = response.json()
     assert data["file"]["file_type"] == "document"
     assert data["file"]["file_url"].startswith("/uploads/")
-    assert "开机前确认安全锁闭合" in data["file"]["text_content"]
+    assert "温升异常时通知值长" in data["file"]["text_content"]
     assert "文档摘录" in data["knowledge_item"]["summary"]
-    assert "开机前确认安全锁闭合" in data["knowledge_item"]["summary"]
+    assert "温升异常时通知值长" in data["knowledge_item"]["summary"]
 
-    files = client.get("/api/files?keyword=安全锁", headers=auth_headers()).json()
+    files = client.get("/api/files?keyword=主变", headers=auth_headers()).json()
     matched = [item for item in files["items"] if item["id"] == data["file"]["id"]]
     assert matched
-    assert "异常时通知班组长" in matched[0]["text_content"]
+    assert "电气检修班" in matched[0]["text_content"]
 
 
 def test_dashboard_ranking_graph_and_agent_shapes_are_frontend_ready():
@@ -193,7 +193,7 @@ def test_dashboard_ranking_graph_and_agent_shapes_are_frontend_ready():
     graph_data = graph.json()
     assert graph_data["nodes"]
     assert graph_data["links"]
-    assert {"employee", "file", "knowledge", "device", "process"}.issubset(
+    assert {"abnormal", "knowledge", "device", "process", "risk"}.issubset(
         {node["category"] for node in graph_data["nodes"]}
     )
 
@@ -203,8 +203,8 @@ def test_dashboard_ranking_graph_and_agent_shapes_are_frontend_ready():
         json={
             "user_id": 2,
             "role_type": "management_decision",
-            "question": "最近哪个工序异常最多？",
-            "context": {"process_name": "开机检查"},
+            "question": "最近哪个电力设备或巡检环节异常最多？",
+            "context": {"process_name": "红外测温巡检"},
         },
     )
     assert agent.status_code == 200
@@ -238,12 +238,12 @@ def test_non_abnormal_upload_normalizes_risk_level_and_points():
         data={
             "title": "非异常高风险字段归一测试",
             "file_type": "text",
-            "device_name": "设备C",
-            "process_name": "产品质检",
+            "device_name": "汽轮机给水泵",
+            "process_name": "运行监听",
             "scene_type": "other",
             "is_abnormal": "0",
             "risk_level": "high",
-            "tags": "质检,说明",
+            "tags": "给水泵,说明",
             "description": "前端误传高风险，但未标记异常",
             "text_content": "这是一条普通文本记录。",
         },
@@ -264,8 +264,8 @@ def test_is_abnormal_only_accepts_zero_or_one():
         data={
             "title": "非法异常标记测试",
             "file_type": "text",
-            "device_name": "设备A",
-            "process_name": "开机检查",
+            "device_name": "1号主变压器",
+            "process_name": "红外测温巡检",
             "scene_type": "other",
             "is_abnormal": "yes",
             "risk_level": "none",
@@ -453,12 +453,12 @@ def test_agent_proxy_sends_multimodal_image_url_parts(monkeypatch):
         json={
             "user_id": 2,
             "role_type": "management_decision",
-            "question": "分析这张安全锁图片是否异常",
+            "question": "分析这张主变红外测温图片是否异常",
             "context": {},
             "attachments": [
                 {
                     "type": "image_url",
-                    "url": "https://example.com/lock.png",
+                    "url": "https://example.com/transformer-thermal.png",
                     "detail": "high",
                 }
             ],
@@ -475,11 +475,11 @@ def test_agent_proxy_sends_multimodal_image_url_parts(monkeypatch):
         {
             "type": "image_url",
             "image_url": {
-                "url": "https://example.com/lock.png",
+                "url": "https://example.com/transformer-thermal.png",
                 "detail": "high",
             },
         },
-        {"type": "text", "text": "分析这张安全锁图片是否异常"},
+        {"type": "text", "text": "分析这张主变红外测温图片是否异常"},
     ]
 
 
@@ -493,13 +493,13 @@ def test_agent_proxy_converts_uploaded_image_file_to_base64_part(monkeypatch):
         data={
             "title": "Agent多模态图片",
             "file_type": "image",
-            "device_name": "设备A",
-            "process_name": "开机检查",
+            "device_name": "1号主变压器",
+            "process_name": "红外测温巡检",
             "scene_type": "abnormal_operation",
             "is_abnormal": "1",
             "risk_level": "high",
         },
-        files={"file": ("agent-lock.png", image_bytes, "image/png")},
+        files={"file": ("agent-thermal.png", image_bytes, "image/png")},
     )
     file_id = upload.json()["file"]["id"]
     captured_body = {}

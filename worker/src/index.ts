@@ -139,19 +139,19 @@ const SCENE_TO_KNOWLEDGE: Record<SceneType, string> = {
 };
 
 const MOCK_ANSWERS: Record<AgentRole, string> = {
-  training_assistant: "建议新员工先学习设备结构、安全规范、标准开机流程和常见异常案例，再进行实操。",
-  operation_qa: "建议按照 SOP 先检查设备状态、确认安全锁、查看报警代码，必要时通知班组长复核。",
-  abnormal_alert: "该情况可能属于中风险异常，建议立即停止当前操作并通知班组长复核。",
-  quality_supervisor: "当前操作质量风险主要来自流程跳步、检查项遗漏和异常复盘不足，建议加强班前确认。",
-  management_decision: "从当前数据看，异常主要集中在开机前检查和上料确认环节，建议加强新员工培训并增加班组长复核。",
+  training_assistant: "建议新员工先学习两票三制、电气五防、主变巡检、开关柜倒闸和汽机辅机点检，再进入现场跟班实操。",
+  operation_qa: "建议按照电力运行 SOP 先核对设备双重编号、运行方式、保护压板状态和现场测温/振动数据，必要时通知值长复核。",
+  abnormal_alert: "该情况可能属于电力设备中高风险异常，建议立即保留运行证据、复测关键参数，并通知值长和检修班组。",
+  quality_supervisor: "当前操作质量风险主要来自倒闸票执行偏差、巡检测温遗漏和异常复盘不足，建议加强两票复核。",
+  management_decision: "从当前数据看，异常主要集中在主变红外测温、开关柜倒闸和汽机给水泵运行监听环节，建议安排专项复测和检修联动。",
 };
 
 const SUGGESTIONS: Record<AgentRole, string[]> = {
-  training_assistant: ["查看标准操作流程", "查看相关培训经验"],
-  operation_qa: ["查看设备 SOP", "查看相关异常案例"],
-  abnormal_alert: ["通知班组长复核", "查看近期同类异常"],
-  quality_supervisor: ["查看风险工序排行", "导出异常案例清单"],
-  management_decision: ["查看开机检查异常趋势", "安排专项培训"],
+  training_assistant: ["查看两票三制培训", "查看开关柜倒闸案例"],
+  operation_qa: ["查看设备巡检 SOP", "查看同类电力异常案例"],
+  abnormal_alert: ["通知值长复核", "查看近期同类设备异常"],
+  quality_supervisor: ["查看风险巡检排行", "导出异常案例清单"],
+  management_decision: ["查看主变测温趋势", "安排电气专项复测"],
 };
 
 const ENABLE_THINKING_MODELS = new Set([
@@ -800,35 +800,34 @@ async function ranking(request: Request, env: Env, url: URL): Promise<Response> 
 
 async function graph(request: Request, env: Env): Promise<Response> {
   await getCurrentUser(request, env);
-  const files = await env.DB.prepare("SELECT * FROM uploaded_files ORDER BY created_at DESC, id DESC LIMIT 80").all<UploadedFile>();
+  const abnormalCases = await env.DB.prepare(
+    "SELECT * FROM abnormal_cases ORDER BY created_at DESC, id DESC LIMIT 4",
+  ).all<AbnormalCase>();
   const nodes = new Map<string, { id: string; name: string; category: string }>();
   const links: Array<{ source: string; target: string; label: string }> = [];
 
-  for (const file of files.results) {
-    const knowledge = await env.DB.prepare("SELECT * FROM knowledge_items WHERE source_file_id = ?").bind(file.id).first<KnowledgeItem>();
-    const abnormal = await env.DB.prepare("SELECT * FROM abnormal_cases WHERE source_file_id = ?").bind(file.id).first<AbnormalCase>();
-    const userId = `user_${file.uploader_id}`;
-    const fileId = `file_${file.id}`;
-    const deviceId = `device_${file.device_name}`;
-    const processId = `process_${file.process_name}`;
+  for (const abnormal of abnormalCases.results) {
+    const knowledge = await env.DB.prepare("SELECT * FROM knowledge_items WHERE source_file_id = ?")
+      .bind(abnormal.source_file_id)
+      .first<KnowledgeItem>();
+    const deviceId = `device_${abnormal.device_name}`;
+    const processId = `process_${abnormal.process_name}`;
+    const abnormalId = `abnormal_${abnormal.id}`;
+    const riskId = `risk_${abnormal.risk_level}`;
 
-    addNode(nodes, userId, file.uploader_name ?? "未知员工", "employee");
-    addNode(nodes, fileId, file.title, "file");
-    addNode(nodes, deviceId, file.device_name ?? "未知设备", "device");
-    addNode(nodes, processId, file.process_name ?? "未知工序", "process");
-    links.push({ source: userId, target: fileId, label: "上传" });
+    addNode(nodes, deviceId, abnormal.device_name ?? "未知设备", "device");
+    addNode(nodes, processId, abnormal.process_name ?? "未知巡检环节", "process");
+    addNode(nodes, abnormalId, abnormal.title ?? "未命名异常", "abnormal");
+    addNode(nodes, riskId, graphRiskLabel(abnormal.risk_level), "risk");
+    links.push({ source: deviceId, target: abnormalId, label: "出现问题" });
+    links.push({ source: abnormalId, target: processId, label: "发生环节" });
+    links.push({ source: abnormalId, target: riskId, label: "风险等级" });
 
     if (knowledge) {
       const knowledgeId = `knowledge_${knowledge.id}`;
       addNode(nodes, knowledgeId, knowledge.title, "knowledge");
-      links.push({ source: fileId, target: knowledgeId, label: "生成" });
-      links.push({ source: knowledgeId, target: deviceId, label: "关联设备" });
-      links.push({ source: knowledgeId, target: processId, label: "关联工序" });
-    }
-    if (abnormal) {
-      const abnormalId = `abnormal_${abnormal.id}`;
-      addNode(nodes, abnormalId, abnormal.title ?? file.title, "abnormal");
-      links.push({ source: abnormalId, target: processId, label: "异常发生于" });
+      links.push({ source: abnormalId, target: knowledgeId, label: "沉淀知识" });
+      links.push({ source: knowledgeId, target: processId, label: "复盘环节" });
     }
   }
 
@@ -837,6 +836,16 @@ async function graph(request: Request, env: Env): Promise<Response> {
 
 function addNode(nodes: Map<string, { id: string; name: string; category: string }>, id: string, name: string, category: string) {
   nodes.set(id, { id, name, category });
+}
+
+function graphRiskLabel(value: string | null): string {
+  return {
+    none: "无风险",
+    low: "低风险",
+    medium: "中风险",
+    high: "高风险",
+    critical: "严重风险",
+  }[value ?? "none"] ?? "未知风险";
 }
 
 async function agentChat(request: Request, env: Env): Promise<Response> {
@@ -873,8 +882,8 @@ async function agentChat(request: Request, env: Env): Promise<Response> {
       suggestions: SUGGESTIONS[payload.role_type],
       sources:
         payload.role_type === "management_decision" || payload.role_type === "quality_supervisor"
-          ? ["D1统计：近7天异常案例与贡献排行", "D1知识库：设备与工序知识条目"]
-          : ["D1知识库：标准操作流程", "D1异常案例：安全复核记录"],
+          ? ["D1统计：近7天电力设备异常与贡献排行", "D1知识库：设备巡检与运行知识条目"]
+          : ["D1知识库：电力设备标准巡检流程", "D1异常案例：主变测温与倒闸复核记录"],
     },
     request,
     env,
@@ -940,13 +949,13 @@ async function systemPrompt(env: Env, roleType: AgentRole): Promise<string> {
   const recent = await env.DB.prepare("SELECT title FROM uploaded_files ORDER BY created_at DESC LIMIT 5").all<{ title: string }>();
   const abnormal = await env.DB.prepare("SELECT title FROM abnormal_cases ORDER BY created_at DESC LIMIT 5").all<{ title: string }>();
   const promptMap: Record<AgentRole, string> = {
-    training_assistant: "你是新员工培训助手，请给出分步骤学习建议并提示安全规范。",
-    operation_qa: "你是一线操作问答助手，请优先提示安全风险和 SOP 步骤。",
-    abnormal_alert: "你是异常操作提醒助手，请判断风险等级并给出立即处理建议。",
-    quality_supervisor: "你是工作质量监督助手，请分析质量风险点、原因和改进建议。",
-    management_decision: "你是管理决策助手，请输出结论、依据、风险、建议和优先级。",
+    training_assistant: "你是电力工厂新员工培训助手，请给出分步骤学习建议并提示两票三制、电气五防和设备安全规范。",
+    operation_qa: "你是电力运行一线操作问答助手，请优先提示安全风险、SOP步骤、复核点和升级汇报条件。",
+    abnormal_alert: "你是电力设备异常提醒助手，请判断风险等级并给出立即处理、隔离复测和汇报建议。",
+    quality_supervisor: "你是电力运行质量监督助手，请分析巡检、倒闸、监盘和消缺质量风险点、原因和改进建议。",
+    management_decision: "你是电力工厂管理决策助手，请输出结论、依据、风险、建议和优先级。",
   };
-  return `${promptMap[roleType]} 请只输出最终答案，不要输出推理过程或 <think> 标签。\n最近上传：${recent.results.map((row) => row.title).join("；")}\n异常案例：${abnormal.results.map((row) => row.title).join("；")}`;
+  return `${promptMap[roleType]} 请只输出最终答案，不要输出推理过程或 <think> 标签。请使用 Markdown 组织答案，优先使用二级标题、要点列表和必要的表格。\n最近上传：${recent.results.map((row) => row.title).join("；")}\n异常案例：${abnormal.results.map((row) => row.title).join("；")}`;
 }
 
 function supportsEnableThinking(model: string): boolean {
@@ -1001,27 +1010,27 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
 }
 
 const SEED_USERS = [
-  ["employee", "123456", "employee", "张三", "一号产线", "设备操作员"],
-  ["admin", "123456", "admin", "李经理", "生产管理部", "管理人员"],
-  ["worker2", "123456", "employee", "王师傅", "二号产线", "资深操作员"],
-  ["worker3", "123456", "employee", "赵工", "维修班组", "维修工程师"],
-  ["worker4", "123456", "employee", "刘班长", "一号产线", "班组长"],
+  ["employee", "Demo@2026#IM-Safe", "employee", "张三", "集控运行一值", "巡检操作员"],
+  ["admin", "Demo@2026#IM-Safe", "admin", "李经理", "发电运行部", "运行值长"],
+  ["worker2", "Demo@2026#IM-Safe", "employee", "王师傅", "电气检修班", "资深电气检修工"],
+  ["worker3", "Demo@2026#IM-Safe", "employee", "赵工", "继电保护班", "继保工程师"],
+  ["worker4", "Demo@2026#IM-Safe", "employee", "刘班长", "锅炉运行二值", "运行班长"],
 ] as const;
 
-const DEVICES = ["设备A", "设备B", "设备C", "设备D"];
-const PROCESSES = ["开机检查", "上料操作", "运行监控", "异常停机处理", "产品质检", "设备维护", "安全复核"];
+const DEVICES = ["1号主变压器", "6kV厂用开关柜", "汽轮机给水泵", "锅炉引风机", "脱硫循环泵", "继电保护屏"];
+const PROCESSES = ["红外测温巡检", "倒闸操作", "运行参数监盘", "异常缺陷处理", "保护压板核对", "润滑油系统点检", "电缆沟安全巡检"];
 const NORMAL_SCENES: Array<[SceneType, FileType, string]> = [
-  ["standard_operation", "video", "标准作业流程"],
-  ["training_experience", "audio", "培训经验记录"],
-  ["maintenance_record", "document", "维护经验"],
-  ["quality_inspection", "image", "质检记录"],
-  ["other", "text", "现场补充说明"],
+  ["standard_operation", "video", "标准倒闸操作视频"],
+  ["training_experience", "audio", "运行经验口述记录"],
+  ["maintenance_record", "document", "检修消缺记录"],
+  ["quality_inspection", "image", "红外测温记录"],
+  ["other", "text", "巡检补充说明"],
 ];
 const ABNORMAL_SCENES: Array<[SceneType, FileType, string, RiskLevel]> = [
-  ["abnormal_operation", "image", "安全锁异常图片", "high"],
-  ["fault_case", "document", "异常停机处理记录", "medium"],
-  ["abnormal_operation", "video", "错误操作视频", "critical"],
-  ["quality_inspection", "image", "产品划痕质检图片", "low"],
+  ["abnormal_operation", "image", "套管温升异常图片", "high"],
+  ["fault_case", "document", "辅机跳闸处理记录", "medium"],
+  ["abnormal_operation", "video", "倒闸操作票执行偏差视频", "critical"],
+  ["quality_inspection", "image", "电缆沟积水隐患图片", "low"],
 ];
 
 async function ensureSeeded(env: Env): Promise<void> {
@@ -1071,8 +1080,8 @@ async function ensureSeeded(env: Env): Promise<void> {
         isAbnormal ? 1 : 0,
         risk,
         `${device},${process},${tagForScene(sceneType)}`,
-        `${device}在${process}环节的${suffix}，用于演示数据沉淀闭环。`,
-        fileType === "text" ? `${title}：该文本经验用于说明现场操作注意事项。` : null,
+        `${device}在${process}环节的${suffix}，用于演示电力工厂运行、巡检、消缺和知识沉淀闭环。`,
+        fileType === "text" ? `${title}：该文本经验用于说明电力设备巡检注意事项、复核要点和风险边界。` : null,
         createdAt,
       )
       .run();
@@ -1090,7 +1099,7 @@ async function ensureSeeded(env: Env): Promise<void> {
     await env.DB.prepare(
       "INSERT INTO agent_messages (user_id, role_type, question, answer, mode, created_at) VALUES (?, ?, ?, ?, 'mock', ?)",
     )
-      .bind(index + 1, roles[index % roles.length], `演示问题 ${index + 1}`, "这是用于大屏统计的历史 Agent mock 对话。", daysAgoIso(index % 7))
+      .bind(index + 1, roles[index % roles.length], `电力巡检演示问题 ${index + 1}`, "这是用于大屏统计的电力工厂历史 Agent mock 对话。", daysAgoIso(index % 7))
       .run();
   }
 }
@@ -1104,7 +1113,7 @@ async function seedStorageObject(
   if (fileType === "text") return { fileName: null, fileUrl: null, storageKey: null };
   const extension = { video: ".mp4", image: ".png", audio: ".mp3", document: ".pdf", text: ".txt" }[fileType];
   const storageKey = `seed_${String(index + 1).padStart(2, "0")}${extension}`;
-  await env.UPLOAD_BUCKET.put(storageKey, new TextEncoder().encode(`seed placeholder for ${title}`), {
+  await env.UPLOAD_BUCKET.put(storageKey, new TextEncoder().encode(`power plant seed placeholder for ${title}`), {
     httpMetadata: { contentType: contentTypeForFile(storageKey, fileType) },
   });
   return { fileName: storageKey, fileUrl: `/uploads/${storageKey}`, storageKey };

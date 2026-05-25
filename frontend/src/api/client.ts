@@ -29,6 +29,7 @@ import {
   mockRecentUploads,
   mockSummary,
 } from "./mockData";
+import { DEMO_ACCESS_KEY } from "../config/demoCredentials";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
 const FORCE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
@@ -76,7 +77,7 @@ export const api = {
       },
       () => {
         const user = demoUsers[username];
-        if (!user || password !== "123456") {
+        if (!user || password !== DEMO_ACCESS_KEY) {
           throw new Error("用户名或密码错误");
         }
         return { token: `demo-token-${username}`, user };
@@ -103,7 +104,7 @@ export const api = {
         return response.data;
       },
       () => {
-        const file = createMockUpload(String(formData.get("title") || "设备A未闭合安全锁图片"));
+        const file = createMockUpload(String(formData.get("title") || "1号主变压器套管红外测温异常图片"));
         return {
           message: "上传成功",
           file,
@@ -132,7 +133,7 @@ export const api = {
             uploader_name: "张三",
             description: file.description,
             status: "pending",
-            ai_suggestion: "建议复核开机前安全锁检查流程。",
+            ai_suggestion: "建议复测红外温度并通知电气检修班核查接头压接状态。",
             created_at: file.created_at,
           },
           score_added: 20,

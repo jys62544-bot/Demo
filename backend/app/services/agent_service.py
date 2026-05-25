@@ -11,19 +11,19 @@ from app.schemas import AgentAttachment, AgentChatRequest
 
 
 MOCK_ANSWERS = {
-    "training_assistant": "建议新员工先学习设备结构、安全规范、标准开机流程和常见异常案例，再进行实操。",
-    "operation_qa": "建议按照 SOP 先检查设备状态、确认安全锁、查看报警代码，必要时通知班组长复核。",
-    "abnormal_alert": "该情况可能属于中风险异常，建议立即停止当前操作并通知班组长复核。",
-    "quality_supervisor": "当前操作质量风险主要来自流程跳步、检查项遗漏和异常复盘不足，建议加强班前确认。",
-    "management_decision": "从当前数据看，异常主要集中在开机前检查和上料确认环节，建议加强新员工培训并增加班组长复核。",
+    "training_assistant": "建议新员工先学习两票三制、电气五防、主变巡检、开关柜倒闸和汽机辅机点检，再进入现场跟班实操。",
+    "operation_qa": "建议按照电力运行 SOP 先核对设备双重编号、运行方式、保护压板状态和现场测温/振动数据，必要时通知值长复核。",
+    "abnormal_alert": "该情况可能属于电力设备中高风险异常，建议立即保留运行证据、复测关键参数，并通知值长和检修班组。",
+    "quality_supervisor": "当前操作质量风险主要来自倒闸票执行偏差、巡检测温遗漏和异常复盘不足，建议加强两票复核。",
+    "management_decision": "从当前数据看，异常主要集中在主变红外测温、开关柜倒闸和汽机给水泵运行监听环节，建议安排专项复测和检修联动。",
 }
 
 SUGGESTIONS = {
-    "training_assistant": ["查看标准操作流程", "查看相关培训经验"],
-    "operation_qa": ["查看设备 SOP", "查看相关异常案例"],
-    "abnormal_alert": ["通知班组长复核", "查看近期同类异常"],
-    "quality_supervisor": ["查看风险工序排行", "导出异常案例清单"],
-    "management_decision": ["查看开机检查异常趋势", "安排专项培训"],
+    "training_assistant": ["查看两票三制培训", "查看开关柜倒闸案例"],
+    "operation_qa": ["查看设备巡检 SOP", "查看同类电力异常案例"],
+    "abnormal_alert": ["通知值长复核", "查看近期同类设备异常"],
+    "quality_supervisor": ["查看风险巡检排行", "导出异常案例清单"],
+    "management_decision": ["查看主变测温趋势", "安排电气专项复测"],
 }
 
 ENABLE_THINKING_MODELS = {
@@ -92,8 +92,8 @@ def _mock_answer(role_type: str, question: str) -> str:
 
 def _mock_sources(role_type: str) -> list[str]:
     if role_type in {"management_decision", "quality_supervisor"}:
-        return ["模拟统计：近7天异常案例与贡献排行", "模拟知识库：设备与工序知识条目"]
-    return ["模拟SOP：设备开机检查流程", "模拟异常案例：安全复核记录"]
+        return ["模拟统计：近7天电力设备异常与贡献排行", "模拟知识库：设备巡检与运行知识条目"]
+    return ["模拟SOP：电力设备标准巡检流程", "模拟异常案例：主变测温与倒闸复核记录"]
 
 
 async def _proxy_answer(db: Session, payload: AgentChatRequest) -> str:
@@ -194,13 +194,18 @@ def _build_context(db: Session) -> str:
 
 def _system_prompt(role_type: str, context: str) -> str:
     prompts = {
-        "training_assistant": "你是新员工培训助手，请给出分步骤学习建议并提示安全规范。",
-        "operation_qa": "你是一线操作问答助手，请优先提示安全风险和 SOP 步骤。",
-        "abnormal_alert": "你是异常操作提醒助手，请判断风险等级并给出立即处理建议。",
-        "quality_supervisor": "你是工作质量监督助手，请分析质量风险点、原因和改进建议。",
-        "management_decision": "你是管理决策助手，请输出结论、依据、风险、建议和优先级。",
+        "training_assistant": "你是电力工厂新员工培训助手，请给出分步骤学习建议并提示两票三制、电气五防和设备安全规范。",
+        "operation_qa": "你是电力运行一线操作问答助手，请优先提示安全风险、SOP步骤、复核点和升级汇报条件。",
+        "abnormal_alert": "你是电力设备异常提醒助手，请判断风险等级并给出立即处理、隔离复测和汇报建议。",
+        "quality_supervisor": "你是电力运行质量监督助手，请分析巡检、倒闸、监盘和消缺质量风险点、原因和改进建议。",
+        "management_decision": "你是电力工厂管理决策助手，请输出结论、依据、风险、建议和优先级。",
     }
-    return f"{prompts.get(role_type, prompts['operation_qa'])} 请只输出最终答案，不要输出推理过程或 <think> 标签。\n\n可用业务上下文：\n{context}"
+    return (
+        f"{prompts.get(role_type, prompts['operation_qa'])} "
+        "请只输出最终答案，不要输出推理过程或 <think> 标签。"
+        "请使用 Markdown 组织答案，优先使用二级标题、要点列表和必要的表格。"
+        f"\n\n可用业务上下文：\n{context}"
+    )
 
 
 def _supports_enable_thinking(model: str) -> bool:

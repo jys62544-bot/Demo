@@ -88,15 +88,15 @@ export default function EmployeeUpload() {
               form={form}
               layout="vertical"
               initialValues={{
-                title: "设备A未闭合安全锁图片",
+                title: "1号主变压器套管红外测温异常图片",
                 file_type: "image",
-                device_name: "设备A",
-                process_name: "开机检查",
+                device_name: "1号主变压器",
+                process_name: "红外测温巡检",
                 scene_type: "abnormal_operation",
                 is_abnormal: true,
                 risk_level: "high",
-                tags: "安全锁,开机,异常",
-                description: "安全锁未闭合，尝试开机前需要复核。",
+                tags: "主变,套管,红外测温,温升异常",
+                description: "红外测温发现高压套管接头温度较历史值偏高，需要复测并通知电气检修班。",
               }}
               onFinish={onFinish}
             >

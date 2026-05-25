@@ -278,6 +278,14 @@ a {
   color: #e2e8f0;
 }
 
+.app-shell-admin .ant-card,
+.app-shell-admin .ant-statistic,
+.app-shell-admin .ant-table-wrapper,
+.app-shell-admin .ant-empty,
+.app-shell-admin .ant-pagination {
+  color: #e2e8f0;
+}
+
 .dashboard-card-dark .ant-card-head,
 .metric-card .ant-statistic-title,
 .dashboard-card-dark .ant-card-head-title {
@@ -306,6 +314,94 @@ a {
 .metric-card .ant-statistic-content {
   color: #ffffff;
   font-family: "Fira Code", monospace;
+}
+
+.app-shell-admin .ant-statistic-title,
+.app-shell-admin .ant-statistic-content,
+.app-shell-admin .ant-statistic-content-prefix,
+.app-shell-admin .ant-statistic-content-suffix,
+.app-shell-admin .ant-card-extra,
+.app-shell-admin .ant-empty-description,
+.app-shell-admin .ant-pagination-item a,
+.app-shell-admin .ant-pagination-prev,
+.app-shell-admin .ant-pagination-next {
+  color: #cbd5e1 !important;
+}
+
+.app-shell-admin .metric-card .ant-statistic-title,
+.app-shell-admin .dashboard-card-dark .ant-card-head-title,
+.app-shell-admin .dashboard-card-dark .ant-table-thead > tr > th {
+  color: #bfdbfe !important;
+}
+
+.app-shell-admin .metric-card .ant-statistic-content,
+.app-shell-admin .ranking-row strong,
+.app-shell-admin .dashboard-card-dark .ant-table-tbody > tr > td,
+.app-shell-admin .dashboard-card-dark .ant-typography {
+  color: #f8fafc !important;
+}
+
+.app-shell-admin .ant-pagination-item {
+  background: rgba(15, 23, 42, 0.72);
+  border-color: rgba(148, 163, 184, 0.26);
+}
+
+.app-shell-admin .ant-pagination-item-active {
+  background: rgba(56, 189, 248, 0.16);
+  border-color: rgba(56, 189, 248, 0.65);
+}
+
+.app-shell-admin .ant-pagination-item-active a {
+  color: #e0f2fe;
+}
+
+.app-shell-admin .ant-input,
+.app-shell-admin .ant-input-affix-wrapper,
+.app-shell-admin .ant-input-search-button,
+.app-shell-admin .ant-input-group-addon,
+.app-shell-admin textarea.ant-input {
+  background: rgba(15, 23, 42, 0.76);
+  border-color: rgba(148, 163, 184, 0.32);
+  color: #e2e8f0;
+}
+
+.app-shell-admin .ant-input::placeholder,
+.app-shell-admin textarea.ant-input::placeholder {
+  color: #94a3b8;
+}
+
+.app-shell-admin .ant-input:hover,
+.app-shell-admin .ant-input:focus,
+.app-shell-admin .ant-input-affix-wrapper:hover,
+.app-shell-admin .ant-input-affix-wrapper-focused,
+.app-shell-admin textarea.ant-input:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.16);
+}
+
+.app-shell-admin .ant-segmented {
+  background: rgba(15, 23, 42, 0.74);
+  color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.app-shell-admin .ant-segmented-item-selected {
+  background: rgba(56, 189, 248, 0.18);
+  color: #ffffff;
+}
+
+.app-shell-admin .ant-upload-wrapper .ant-upload-drag {
+  background: rgba(15, 23, 42, 0.58);
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+.app-shell-admin .ant-upload-wrapper .ant-upload-drag:hover {
+  border-color: #38bdf8;
+}
+
+.app-shell-admin .ant-upload-wrapper .ant-upload-text,
+.app-shell-admin .ant-upload-wrapper .ant-upload-hint {
+  color: #cbd5e1;
 }
 
 .metric-icon {
@@ -418,6 +514,105 @@ a {
   margin: 0 0 10px;
 }
 
+.agent-markdown {
+  color: inherit;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+
+.agent-markdown > :first-child {
+  margin-top: 0;
+}
+
+.agent-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.agent-markdown p,
+.agent-markdown ul,
+.agent-markdown ol,
+.agent-markdown blockquote,
+.agent-markdown table,
+.agent-markdown pre {
+  margin: 0 0 12px;
+}
+
+.agent-markdown h1,
+.agent-markdown h2,
+.agent-markdown h3,
+.agent-markdown h4 {
+  margin: 14px 0 8px;
+  color: inherit;
+  line-height: 1.35;
+}
+
+.agent-markdown h1 {
+  font-size: 22px;
+}
+
+.agent-markdown h2 {
+  font-size: 20px;
+}
+
+.agent-markdown h3 {
+  font-size: 18px;
+}
+
+.agent-markdown ul,
+.agent-markdown ol {
+  padding-left: 22px;
+}
+
+.agent-markdown li + li {
+  margin-top: 4px;
+}
+
+.agent-markdown code {
+  font-family: "Fira Code", monospace;
+  font-size: 0.92em;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(15, 23, 42, 0.1);
+}
+
+.agent-markdown pre {
+  padding: 12px;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #e2e8f0;
+  overflow-x: auto;
+}
+
+.agent-markdown pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.agent-markdown blockquote {
+  padding: 8px 12px;
+  border-left: 3px solid #38bdf8;
+  background: rgba(56, 189, 248, 0.08);
+  border-radius: 0 8px 8px 0;
+}
+
+.agent-markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.agent-markdown th,
+.agent-markdown td {
+  padding: 8px 10px;
+  border: 1px solid rgba(148, 163, 184, 0.26);
+  text-align: left;
+}
+
+.agent-markdown th {
+  background: rgba(56, 189, 248, 0.1);
+  font-weight: 700;
+}
+
 .chat-bubble-user {
   margin-left: auto;
   background: #dcfce7;
@@ -437,6 +632,16 @@ a {
 .app-shell-admin .chat-bubble-agent {
   background: rgba(30, 41, 59, 0.86);
   color: #e2e8f0;
+}
+
+.app-shell-admin .agent-markdown code {
+  background: rgba(148, 163, 184, 0.16);
+  color: #f8fafc;
+}
+
+.app-shell-admin .agent-markdown blockquote {
+  background: rgba(56, 189, 248, 0.12);
+  color: #dbeafe;
 }
 
 .suggestion-list {
@@ -471,8 +676,58 @@ a {
   color: #93c5fd;
 }
 
+.dashboard-card-dark .ant-table-tbody > tr.ant-table-row:hover > td {
+  background: rgba(56, 189, 248, 0.08);
+}
+
 .dashboard-card-dark .ant-table-wrapper {
   overflow-x: auto;
+}
+
+.graph-visual-card.ant-card .ant-card-body {
+  padding: 16px 18px 12px;
+}
+
+.graph-hint {
+  color: #93c5fd;
+  font-size: 13px;
+}
+
+.graph-side-card.ant-card {
+  height: 100%;
+}
+
+.graph-summary.ant-typography {
+  color: #dbeafe;
+  line-height: 1.75;
+  margin-bottom: 2px;
+}
+
+.graph-category-list {
+  display: grid;
+  gap: 10px;
+}
+
+.graph-category-item {
+  min-height: 62px;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(30, 41, 59, 0.66);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.graph-category-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.78);
+  font-size: 18px;
 }
 
 @media (max-width: 900px) {
@@ -522,8 +777,13 @@ a {
     display: block;
     max-width: 100vw;
     overflow-x: auto;
+    scrollbar-width: none;
     border-bottom: 1px solid #e2e8f0;
     background: rgba(255, 255, 255, 0.96);
+  }
+
+  .mobile-nav-wrap::-webkit-scrollbar {
+    display: none;
   }
 
   .app-shell-admin .mobile-nav-wrap {
@@ -586,5 +846,18 @@ a {
 
   .ant-table-wrapper {
     overflow-x: auto;
+  }
+
+  .graph-visual-card .echarts-for-react {
+    height: 480px !important;
+  }
+
+  .graph-category-item {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+
+  .graph-category-item .ant-tag {
+    grid-column: 2;
+    width: fit-content;
   }
 }

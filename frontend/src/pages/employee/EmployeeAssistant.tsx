@@ -1,14 +1,15 @@
 import { InboxOutlined, MessageOutlined, SendOutlined } from "@ant-design/icons";
-import { Alert, Button, Card, Input, Segmented, Space, Spin, Tag, Typography, Upload, message } from "antd";
+import { Alert, Button, Card, Input, Segmented, Space, Spin, Tag, Upload, message } from "antd";
 import type { UploadFile } from "antd";
 import { useState } from "react";
 import { api } from "../../api/client";
+import AgentMarkdown from "../../components/AgentMarkdown";
 import AppShell from "../../layouts/AppShell";
 import type { AgentAttachment, AgentChatResponse, AgentRoleType, FileType } from "../../types";
 
 export default function EmployeeAssistant() {
   const [roleType, setRoleType] = useState<AgentRoleType>("operation_qa");
-  const [question, setQuestion] = useState("设备A开机检查前应该重点确认哪些风险？");
+  const [question, setQuestion] = useState("1号主变压器红外测温巡检前应该重点确认哪些风险？");
   const [answer, setAnswer] = useState<AgentChatResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
@@ -73,7 +74,7 @@ export default function EmployeeAssistant() {
           {error ? <Alert type="error" showIcon message="调用失败" description={error} /> : null}
           {answer ? (
             <>
-              <Typography.Paragraph>{answer.answer}</Typography.Paragraph>
+              <AgentMarkdown content={answer.answer} />
               <Space wrap>
                 <Tag color={answer.mode === "proxy" ? "green" : "blue"}>{answer.mode}</Tag>
                 {answer.sources.map((source) => (

@@ -2,11 +2,12 @@ import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import { App as AntApp, Button, Card, Form, Input, Segmented, Space, Typography } from "antd";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { DEMO_ACCESS_KEY } from "../config/demoCredentials";
 import { useAuth } from "../store/useAuth";
 
 type LoginForm = {
   username: string;
-  password: string;
+  demoAccessKey: string;
 };
 
 export default function LoginPage() {
@@ -19,13 +20,13 @@ export default function LoginPage() {
 
   const applyPreset = (value: "employee" | "admin") => {
     setRolePreset(value);
-    form.setFieldsValue({ username: value, password: "123456" });
+    form.setFieldsValue({ username: value, demoAccessKey: DEMO_ACCESS_KEY });
   };
 
   const onFinish = async (values: LoginForm) => {
     setLoading(true);
     try {
-      const result = await login(values.username, values.password);
+      const result = await login(values.username, values.demoAccessKey);
       message.success(`已进入${result.user.role === "admin" ? "管理端" : "员工端"}`);
       navigate(result.user.role === "admin" ? "/admin/dashboard" : "/employee/dashboard", { replace: true });
     } catch (error) {
@@ -79,14 +80,15 @@ export default function LoginPage() {
             <Form
               form={form}
               layout="vertical"
-              initialValues={{ username: "employee", password: "123456" }}
+              initialValues={{ username: "employee", demoAccessKey: DEMO_ACCESS_KEY }}
+              autoComplete="off"
               onFinish={onFinish}
             >
               <Form.Item name="username" label="账号" rules={[{ required: true, message: "请输入账号" }]}>
-                <Input size="large" prefix={<UserOutlined />} />
+                <Input size="large" prefix={<UserOutlined />} autoComplete="off" />
               </Form.Item>
-              <Form.Item name="password" label="密码" rules={[{ required: true, message: "请输入密码" }]}>
-                <Input.Password size="large" prefix={<LockOutlined />} />
+              <Form.Item name="demoAccessKey" label="演示口令" rules={[{ required: true, message: "请输入演示口令" }]}>
+                <Input size="large" prefix={<LockOutlined />} autoComplete="off" spellCheck={false} />
               </Form.Item>
               <Button type="primary" size="large" htmlType="submit" loading={loading} block>
                 进入系统
