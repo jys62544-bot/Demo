@@ -97,6 +97,61 @@ export const mockRecentUploads: RecentUpload[] = [
   },
 ];
 
+export const mockFiles: UploadedFile[] = mockRecentUploads.map((item) => ({
+  ...item,
+  file_name: `${item.id}.png`,
+  file_url: null,
+  uploader_id: item.uploader_name === "张三" ? 1 : 3,
+  scene_type: item.is_abnormal ? "abnormal_operation" : "standard_operation",
+  tags: item.is_abnormal ? "安全,异常,巡检" : "标准,巡检",
+  description: item.is_abnormal ? "现场发现异常，需要沉淀为案例。" : "标准操作记录。",
+}));
+
+export const mockKnowledgeItems: KnowledgeItem[] = [
+  {
+    id: 1,
+    title: "设备A - 开机检查 - 安全锁未闭合",
+    knowledge_type: "异常案例",
+    source_file_id: 101,
+    device_name: "设备A",
+    process_name: "开机检查",
+    contributor_id: 1,
+    contributor_name: "张三",
+    tags: "安全锁,开机,异常",
+    status: "pending",
+    summary: "开机前安全锁未闭合，建议加入二次确认。",
+    created_at: "2026-05-25T09:30:00",
+  },
+  {
+    id: 2,
+    title: "设备B - 巡检 - 标准动作视频",
+    knowledge_type: "标准操作",
+    source_file_id: 102,
+    device_name: "设备B",
+    process_name: "巡检",
+    contributor_id: 3,
+    contributor_name: "王五",
+    tags: "巡检,标准",
+    status: "approved",
+    summary: "班前巡检的标准动作和关键检查点。",
+    created_at: "2026-05-25T09:10:00",
+  },
+  {
+    id: 3,
+    title: "设备C - 产品质检 - 异常震动录音",
+    knowledge_type: "故障处理",
+    source_file_id: 103,
+    device_name: "设备C",
+    process_name: "产品质检",
+    contributor_id: 4,
+    contributor_name: "赵六",
+    tags: "震动,质检,维修",
+    status: "pending",
+    summary: "录音中出现连续异响，疑似固定件松动。",
+    created_at: "2026-05-25T08:48:00",
+  },
+];
+
 export const mockRanking: RankingRow[] = [
   {
     rank: 1,
@@ -157,21 +212,6 @@ export const mockAbnormalCases: AbnormalCase[] = [
   },
 ];
 
-export const mockKnowledgeItems: KnowledgeItem[] = mockRecentUploads.map((item) => ({
-  id: item.id,
-  title: `${item.device_name} - ${item.process_name} - ${item.title}`,
-  knowledge_type: item.is_abnormal ? "异常案例" : "现场经验",
-  source_file_id: item.id,
-  device_name: item.device_name,
-  process_name: item.process_name,
-  contributor_id: 1,
-  contributor_name: item.uploader_name,
-  tags: item.is_abnormal ? "异常,复核" : "标准操作",
-  status: "pending",
-  summary: `该知识条目来源于 ${item.uploader_name} 上传的 ${item.file_type} 数据。`,
-  created_at: item.created_at,
-}));
-
 export const mockContributions: Contribution[] = [
   {
     id: 1,
@@ -180,7 +220,7 @@ export const mockContributions: Contribution[] = [
     action_type: "upload_abnormal",
     points: 20,
     related_file_id: 101,
-    description: "上传高风险异常案例：设备A未闭合安全锁图片",
+    description: "上传高风险异常图片并生成案例",
     created_at: "2026-05-25T09:30:00",
   },
   {
@@ -189,9 +229,19 @@ export const mockContributions: Contribution[] = [
     user_name: "张三",
     action_type: "upload_video",
     points: 15,
-    related_file_id: 102,
+    related_file_id: 88,
     description: "上传标准操作视频",
-    created_at: "2026-05-24T16:18:00",
+    created_at: "2026-05-24T16:12:00",
+  },
+  {
+    id: 3,
+    user_id: 1,
+    user_name: "张三",
+    action_type: "upload_normal",
+    points: 10,
+    related_file_id: 77,
+    description: "提交班前巡检经验",
+    created_at: "2026-05-23T11:20:00",
   },
 ];
 

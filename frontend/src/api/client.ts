@@ -22,6 +22,7 @@ import {
   mockAbnormalCases,
   mockAgentAnswer,
   mockContributions,
+  mockFiles,
   mockGraph,
   mockKnowledgeItems,
   mockRanking,
@@ -169,7 +170,7 @@ export const api = {
         });
         return response.data;
       },
-      () => ({ items: mockRecentUploads, total: mockRecentUploads.length }),
+      () => ({ items: mockFiles, total: mockFiles.length }),
     );
   },
 
@@ -219,10 +220,11 @@ export const api = {
     );
   },
 
-  async contributions(params: QueryParams = {}): Promise<ContributionListResponse> {
+  async contributions(params: QueryParams | number = {}): Promise<ContributionListResponse> {
+    const queryParams = typeof params === "number" ? { user_id: params } : params;
     return withMockFallback(
       async () => {
-        const response = await client.get<ContributionListResponse>(`/contributions${query(params)}`, {
+        const response = await client.get<ContributionListResponse>(`/contributions${query(queryParams)}`, {
           headers: authHeader(),
         });
         return response.data;

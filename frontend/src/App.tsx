@@ -2,12 +2,13 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import type { ReactElement } from "react";
 import { useAuth } from "./store/useAuth";
 import type { UserRole } from "./types";
-import AgentChatPage from "./pages/AgentChatPage";
-import AdminAbnormal from "./pages/admin/AdminAbnormal";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminAbnormal from "./pages/admin/AdminAbnormal";
+import AdminDecisionAgent from "./pages/admin/AdminDecisionAgent";
 import AdminGraph from "./pages/admin/AdminGraph";
 import AdminKnowledge from "./pages/admin/AdminKnowledge";
 import AdminRanking from "./pages/admin/AdminRanking";
+import EmployeeAssistant from "./pages/employee/EmployeeAssistant";
 import EmployeeContribution from "./pages/employee/EmployeeContribution";
 import EmployeeDashboard from "./pages/employee/EmployeeDashboard";
 import EmployeeUpload from "./pages/employee/EmployeeUpload";
@@ -53,7 +54,7 @@ export default function App() {
         path="/employee/assistant"
         element={
           <RequireAuth role="employee">
-            <AgentChatPage scope="employee" title="AI 助手" defaultRole="operation_qa" />
+            <EmployeeAssistant />
           </RequireAuth>
         }
       />
@@ -109,7 +110,7 @@ export default function App() {
         path="/admin/decision-agent"
         element={
           <RequireAuth role="admin">
-            <AgentChatPage scope="admin" title="Agent 决策" defaultRole="management_decision" />
+            <AdminDecisionAgent />
           </RequireAuth>
         }
       />

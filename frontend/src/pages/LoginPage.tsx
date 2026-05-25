@@ -1,5 +1,5 @@
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
-import { Button, Card, Form, Input, Segmented, Space, Typography, message } from "antd";
+import { App as AntApp, Button, Card, Form, Input, Segmented, Space, Typography } from "antd";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../store/useAuth";
@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [form] = Form.useForm<LoginForm>();
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { message } = AntApp.useApp();
 
   const applyPreset = (value: "employee" | "admin") => {
     setRolePreset(value);
@@ -59,7 +60,7 @@ export default function LoginPage() {
           </div>
         </div>
         <Card className="login-card">
-          <Space direction="vertical" size={18} className="full-width">
+          <Space orientation="vertical" size={18} className="full-width">
             <div>
               <Typography.Title level={3} className="compact-title">
                 登录 Demo

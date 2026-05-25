@@ -1,122 +1,77 @@
-import { CloudUploadOutlined, DatabaseOutlined, TrophyOutlined } from "@ant-design/icons";
-import { Card, Col, Empty, Row, Spin, Statistic, Table, Tag } from "antd";
+import { TrophyOutlined } from "@ant-design/icons";
+import { Card, Col, Row, Statistic, Table, Tag } from "antd";
 import { useEffect, useState } from "react";
 import { api } from "../../api/client";
 import AppShell from "../../layouts/AppShell";
 import { useAuth } from "../../store/useAuth";
-import type { Contribution, KnowledgeItem, UploadedFile } from "../../types";
+import type { Contribution, UploadedFile } from "../../types";
+import { fileTypeLabel, formatTime, riskColor, riskLabel } from "../../utils/labels";
 
 export default function EmployeeContribution() {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [totalPoints, setTotalPoints] = useState(0);
   const [contributions, setContributions] = useState<Contribution[]>([]);
+  const [totalPoints, setTotalPoints] = useState(0);
   const [files, setFiles] = useState<UploadedFile[]>([]);
-  const [knowledge, setKnowledge] = useState<KnowledgeItem[]>([]);
 
   useEffect(() => {
-    async function load() {
-      setLoading(true);
-      const [contributionData, fileData, knowledgeData] = await Promise.all([
-        api.contributions({ user_id: user?.id, limit: 20 }),
-        api.files({ user_id: user?.id, limit: 10 }),
-        api.knowledge({ limit: 10 }),
-      ]);
-      setTotalPoints(contributionData.total_points);
+    Promise.all([api.contributions(user?.id), api.files()]).then(([contributionData, fileData]) => {
       setContributions(contributionData.items);
-      setFiles(fileData.items);
-      setKnowledge(knowledgeData.items.filter((item) => !user?.id || item.contributor_id === user.id));
-      setLoading(false);
-    }
-
-    void load();
+      setTotalPoints(contributionData.total_points);
+      setFiles(fileData.items.filter((item) => !user?.id || item.uploader_id === user.id).slice(0, 8));
+    });
   }, [user?.id]);
 
   return (
-    <AppShell scope="employee" title="我的贡献" subtitle="查看上传记录、贡献积分和沉淀出的知识条目">
-      <Spin spinning={loading}>
-        <Row gutter={[16, 16]}>
-          <Col xs={24} md={8}>
-            <Card>
-              <Statistic title="累计积分" value={totalPoints} prefix={<TrophyOutlined />} />
-            </Card>
-          </Col>
-          <Col xs={24} md={8}>
-            <Card>
-              <Statistic title="上传记录" value={files.length} suffix="条" prefix={<CloudUploadOutlined />} />
-            </Card>
-          </Col>
-          <Col xs={24} md={8}>
-            <Card>
-              <Statistic title="知识条目" value={knowledge.length} suffix="条" prefix={<DatabaseOutlined />} />
-            </Card>
-          </Col>
-        </Row>
-
-        <Row gutter={[16, 16]} className="section-spacing">
-          <Col xs={24} xl={13}>
-            <Card title="积分明细">
-              <Table
-                rowKey="id"
-                dataSource={contributions}
-                pagination={false}
-                locale={{ emptyText: <Empty description="暂无积分记录" /> }}
-                columns={[
-                  { title: "说明", dataIndex: "description" },
-                  { title: "动作", dataIndex: "action_type", width: 120, render: (value: string) => <Tag>{value}</Tag> },
-                  { title: "积分", dataIndex: "points", width: 90, render: (value: number) => <strong>+{value}</strong> },
-                ]}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} xl={11}>
-            <Card title="最近上传">
-              <Table
-                rowKey="id"
-                dataSource={files}
-                pagination={false}
-                locale={{ emptyText: <Empty description="暂无上传记录" /> }}
-                columns={[
-                  { title: "标题", dataIndex: "title" },
-                  { title: "类型", dataIndex: "file_type", width: 90, render: (value: string) => <Tag>{value}</Tag> },
-                  {
-                    title: "风险",
-                    dataIndex: "risk_level",
-                    width: 100,
-                    render: (value: string, row: UploadedFile) => <Tag color={row.is_abnormal ? "red" : "green"}>{riskLabel(value)}</Tag>,
-                  },
-                ]}
-              />
-            </Card>
-          </Col>
-        </Row>
-
-        <Card title="我的知识条目" className="section-spacing">
-          <Table
-            rowKey="id"
-            dataSource={knowledge}
-            pagination={false}
-            locale={{ emptyText: <Empty description="暂无知识条目" /> }}
-            columns={[
-              { title: "标题", dataIndex: "title" },
-              { title: "知识类型", dataIndex: "knowledge_type", width: 140, render: (value: string) => <Tag color="blue">{value}</Tag> },
-              { title: "设备", dataIndex: "device_name", width: 120 },
-              { title: "状态", dataIndex: "status", width: 100, render: (value: string) => <Tag>{value}</Tag> },
-            ]}
-          />
-        </Card>
-      </Spin>
+    <AppShell scope="employee" title="我的贡献" subtitle="查看上传记录、积分明细和知识沉淀情况">
+      <Row gutter={[16, 16]}>
+        <Col xs={24} md={8}>
+          <Card>
+            <Statistic title="总积分" value={totalPoints} prefix={<TrophyOutlined />} />
+          </Card>
+        </Col>
+        <Col xs={24} md={8}>
+          <Card>
+            <Statistic title="上传记录" value={files.length} suffix="条" />
+          </Card>
+        </Col>
+        <Col xs={24} md={8}>
+          <Card>
+            <Statistic title="异常贡献" value={files.filter((item) => item.is_abnormal).length} suffix="条" />
+          </Card>
+        </Col>
+      </Row>
+      <Card className="section-spacing" title="积分明细">
+        <Table
+          rowKey="id"
+          dataSource={contributions}
+          pagination={{ pageSize: 6 }}
+          columns={[
+            { title: "说明", dataIndex: "description" },
+            { title: "动作", dataIndex: "action_type", width: 140, render: (value) => <Tag>{value}</Tag> },
+            { title: "积分", dataIndex: "points", width: 100, render: (value) => <strong>+{value}</strong> },
+            { title: "时间", dataIndex: "created_at", width: 130, render: formatTime },
+          ]}
+        />
+      </Card>
+      <Card className="section-spacing" title="最近上传">
+        <Table
+          rowKey="id"
+          dataSource={files}
+          pagination={false}
+          columns={[
+            { title: "标题", dataIndex: "title" },
+            { title: "类型", dataIndex: "file_type", width: 100, render: (value) => fileTypeLabel[value as keyof typeof fileTypeLabel] },
+            { title: "设备", dataIndex: "device_name", width: 110 },
+            { title: "工序", dataIndex: "process_name", width: 120 },
+            {
+              title: "风险",
+              dataIndex: "risk_level",
+              width: 110,
+              render: (value) => <Tag color={riskColor[value as keyof typeof riskColor]}>{riskLabel[value as keyof typeof riskLabel]}</Tag>,
+            },
+          ]}
+        />
+      </Card>
     </AppShell>
   );
-}
-
-function riskLabel(value: string) {
-  const labels: Record<string, string> = {
-    none: "正常",
-    low: "低风险",
-    medium: "中风险",
-    high: "高风险",
-    critical: "严重",
-  };
-  return labels[value] || value;
 }

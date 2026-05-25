@@ -63,13 +63,13 @@ export default function AppShell({ scope, title, subtitle, children }: AppShellP
       </Sider>
       <Layout>
         <Header className="app-header">
-          <div>
+          <div className="page-heading">
             <Typography.Title level={3} className="page-title">
               {title}
             </Typography.Title>
             {subtitle ? <div className="page-subtitle">{subtitle}</div> : null}
           </div>
-          <Space size={12}>
+          <Space size={12} className="header-actions">
             <Tag color={dark ? "geekblue" : "green"}>{user?.department || "Demo Team"}</Tag>
             <Space className="user-chip">
               <UserOutlined />
@@ -86,6 +86,15 @@ export default function AppShell({ scope, title, subtitle, children }: AppShellP
             </Button>
           </Space>
         </Header>
+        <div className="mobile-nav-wrap">
+          <Menu
+            mode="horizontal"
+            selectedKeys={[location.pathname]}
+            items={items}
+            theme={dark ? "dark" : "light"}
+            className="mobile-nav"
+          />
+        </div>
         <Content className="app-content">{children}</Content>
       </Layout>
     </Layout>

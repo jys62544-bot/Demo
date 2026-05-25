@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { ConfigProvider, theme } from "antd";
+import { App as AntApp, ConfigProvider, theme } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./store/AuthProvider";
@@ -22,9 +22,11 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       }}
     >
       <BrowserRouter>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
+        <AntApp>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </AntApp>
       </BrowserRouter>
     </ConfigProvider>
   </React.StrictMode>,
