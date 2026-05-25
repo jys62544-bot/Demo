@@ -1,0 +1,57 @@
+# Local agent context and private project requirements
+工程要求.md
+AGENTS.md
+CLAUDE.md
+
+# Local Codex/Kimi skills and workspace metadata
+.codex/skills/ui-ux-pro-max/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+venv/
+.venv/
+env/
+
+# Backend runtime artifacts
+backend/.env
+backend/.env.*
+!backend/.env.example
+backend/industrial_demo.db
+backend/*.db
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Frontend dependencies and builds
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# Logs and temporary files
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
