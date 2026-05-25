@@ -6,6 +6,8 @@ export interface Env {
   AGENT_API_KEY?: string;
   AGENT_MODEL?: string;
   AGENT_TIMEOUT_SECONDS?: string;
+  AGENT_ENABLE_THINKING?: string;
+  AGENT_MAX_TOKENS?: string;
   CORS_ORIGINS?: string;
   CORS_ORIGIN_SUFFIXES?: string;
 }
@@ -150,6 +152,22 @@ const SUGGESTIONS: Record<AgentRole, string[]> = {
   management_decision: ["查看开机检查异常趋势", "安排专项培训"],
 };
 
+const ENABLE_THINKING_MODELS = new Set([
+  "Qwen/Qwen3-8B",
+  "Qwen/Qwen3-14B",
+  "Qwen/Qwen3-30B-A3B",
+  "Qwen/Qwen3-32B",
+  "Qwen/Qwen3-235B-A22B",
+  "tencent/Hunyuan-A13B-Instruct",
+  "zai-org/GLM-4.5V",
+  "zai-org/GLM-4.6V",
+  "zai-org/GLM-5V-Turbo",
+  "deepseek-ai/DeepSeek-V3.1",
+  "deepseek-ai/DeepSeek-V3.1-Terminus",
+  "deepseek-ai/DeepSeek-V3.2-Exp",
+  "deepseek-ai/DeepSeek-V3.2",
+]);
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     if (request.method === "OPTIONS") {
@@ -275,6 +293,17 @@ function intParam(url: URL, name: string, fallback: number, min = 0, max = 100):
   const value = Number(raw);
   if (!Number.isInteger(value) || value < min || value > max) throw new HttpError(400, `${name} 参数不合法`);
   return value;
+}
+
+function boolEnv(value: string | undefined, fallback: boolean): boolean {
+  if (value === undefined) return fallback;
+  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+}
+
+function intEnv(value: string | undefined, fallback: number, min: number, max: number): number {
+  const parsed = Number(value ?? fallback);
+  if (!Number.isInteger(parsed) || parsed < min || parsed > max) return fallback;
+  return parsed;
 }
 
 function nowIso(): string {
@@ -821,7 +850,8 @@ async function agentChat(request: Request, env: Env): Promise<Response> {
     try {
       answer = await proxyAgentAnswer(env, payload);
       responseMode = "proxy";
-    } catch {
+    } catch (error) {
+      console.warn("Agent proxy failed", error instanceof Error ? error.message : String(error));
       responseMode = "mock_fallback";
       answer = mockAnswer(payload.role_type, payload.question);
     }
@@ -864,14 +894,17 @@ function mockAnswer(roleType: AgentRole, question: string): string {
 }
 
 async function proxyAgentAnswer(env: Env, payload: AgentChatRequest): Promise<string> {
-  const body = {
-    model: env.AGENT_MODEL ?? "Qwen/Qwen3-VL-32B-Instruct",
+  const model = env.AGENT_MODEL ?? "Qwen/Qwen3-VL-32B-Instruct";
+  const body: Record<string, unknown> = {
+    model,
     messages: [
       { role: "system", content: await systemPrompt(env, payload.role_type) },
       { role: "user", content: await userContent(env, payload) },
     ],
     temperature: 0.2,
+    max_tokens: intEnv(env.AGENT_MAX_TOKENS, 800, 1, 8192),
   };
+  if (supportsEnableThinking(model)) body.enable_thinking = boolEnv(env.AGENT_ENABLE_THINKING, false);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), Number(env.AGENT_TIMEOUT_SECONDS ?? "60") * 1000);
   try {
@@ -904,7 +937,11 @@ async function systemPrompt(env: Env, roleType: AgentRole): Promise<string> {
     quality_supervisor: "你是工作质量监督助手，请分析质量风险点、原因和改进建议。",
     management_decision: "你是管理决策助手，请输出结论、依据、风险、建议和优先级。",
   };
-  return `${promptMap[roleType]}\n最近上传：${recent.results.map((row) => row.title).join("；")}\n异常案例：${abnormal.results.map((row) => row.title).join("；")}`;
+  return `${promptMap[roleType]} 请只输出最终答案，不要输出推理过程或 <think> 标签。\n最近上传：${recent.results.map((row) => row.title).join("；")}\n异常案例：${abnormal.results.map((row) => row.title).join("；")}`;
+}
+
+function supportsEnableThinking(model: string): boolean {
+  return ENABLE_THINKING_MODELS.has(model);
 }
 
 async function userContent(env: Env, payload: AgentChatRequest): Promise<string | Array<Record<string, unknown>>> {

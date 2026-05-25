@@ -26,6 +26,22 @@ SUGGESTIONS = {
     "management_decision": ["查看开机检查异常趋势", "安排专项培训"],
 }
 
+ENABLE_THINKING_MODELS = {
+    "Qwen/Qwen3-8B",
+    "Qwen/Qwen3-14B",
+    "Qwen/Qwen3-30B-A3B",
+    "Qwen/Qwen3-32B",
+    "Qwen/Qwen3-235B-A22B",
+    "tencent/Hunyuan-A13B-Instruct",
+    "zai-org/GLM-4.5V",
+    "zai-org/GLM-4.6V",
+    "zai-org/GLM-5V-Turbo",
+    "deepseek-ai/DeepSeek-V3.1",
+    "deepseek-ai/DeepSeek-V3.1-Terminus",
+    "deepseek-ai/DeepSeek-V3.2-Exp",
+    "deepseek-ai/DeepSeek-V3.2",
+}
+
 
 async def answer_agent_chat(db: Session, payload: AgentChatRequest, current_user_id: int) -> dict:
     role_type = payload.role_type
@@ -92,7 +108,10 @@ async def _proxy_answer(db: Session, payload: AgentChatRequest) -> str:
             {"role": "user", "content": _build_user_content(db, payload)},
         ],
         "temperature": 0.2,
+        "max_tokens": settings.agent_max_tokens,
     }
+    if _supports_enable_thinking(settings.agent_model):
+        body["enable_thinking"] = settings.agent_enable_thinking
     async with httpx.AsyncClient(timeout=settings.agent_timeout_seconds, trust_env=False) as client:
         response = await client.post(url, headers=headers, json=body)
         response.raise_for_status()
@@ -176,4 +195,8 @@ def _system_prompt(role_type: str, context: str) -> str:
         "quality_supervisor": "你是工作质量监督助手，请分析质量风险点、原因和改进建议。",
         "management_decision": "你是管理决策助手，请输出结论、依据、风险、建议和优先级。",
     }
-    return f"{prompts.get(role_type, prompts['operation_qa'])}\n\n可用业务上下文：\n{context}"
+    return f"{prompts.get(role_type, prompts['operation_qa'])} 请只输出最终答案，不要输出推理过程或 <think> 标签。\n\n可用业务上下文：\n{context}"
+
+
+def _supports_enable_thinking(model: str) -> bool:
+    return model in ENABLE_THINKING_MODELS

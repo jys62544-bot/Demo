@@ -18,6 +18,8 @@ class Settings:
     agent_api_key: str = os.getenv("AGENT_API_KEY", "")
     agent_model: str = os.getenv("AGENT_MODEL", "gpt-4o-mini")
     agent_timeout_seconds: int = int(os.getenv("AGENT_TIMEOUT_SECONDS", "60"))
+    agent_enable_thinking: bool = os.getenv("AGENT_ENABLE_THINKING", "false").lower() in {"1", "true", "yes", "on"}
+    agent_max_tokens: int = int(os.getenv("AGENT_MAX_TOKENS", "800"))
     cors_origins: list[str] = [
         origin.strip()
         for origin in os.getenv(
