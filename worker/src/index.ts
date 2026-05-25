@@ -5,6 +5,8 @@ export interface Env {
   AGENT_API_BASE_URL?: string;
   AGENT_API_KEY?: string;
   AGENT_MODEL?: string;
+  AGENT_TEXT_MODEL?: string;
+  AGENT_VISION_MODEL?: string;
   AGENT_TIMEOUT_SECONDS?: string;
   AGENT_ENABLE_THINKING?: string;
   AGENT_MAX_TOKENS?: string;
@@ -894,7 +896,7 @@ function mockAnswer(roleType: AgentRole, question: string): string {
 }
 
 async function proxyAgentAnswer(env: Env, payload: AgentChatRequest): Promise<string> {
-  const model = env.AGENT_MODEL ?? "Qwen/Qwen3-VL-32B-Instruct";
+  const model = selectedAgentModel(env, payload);
   const body: Record<string, unknown> = {
     model,
     messages: [
@@ -925,6 +927,13 @@ async function proxyAgentAnswer(env: Env, payload: AgentChatRequest): Promise<st
   } finally {
     clearTimeout(timeout);
   }
+}
+
+function selectedAgentModel(env: Env, payload: AgentChatRequest): string {
+  if ((payload.attachments ?? []).length > 0) {
+    return env.AGENT_VISION_MODEL ?? env.AGENT_MODEL ?? "Qwen/Qwen3-VL-32B-Instruct";
+  }
+  return env.AGENT_TEXT_MODEL ?? "Qwen/Qwen3-30B-A3B-Instruct-2507";
 }
 
 async function systemPrompt(env: Env, roleType: AgentRole): Promise<string> {

@@ -16,7 +16,9 @@ class Settings:
     agent_mode: str = os.getenv("AGENT_MODE", "mock")
     agent_api_base_url: str = os.getenv("AGENT_API_BASE_URL", "https://api.openai.com/v1")
     agent_api_key: str = os.getenv("AGENT_API_KEY", "")
-    agent_model: str = os.getenv("AGENT_MODEL", "gpt-4o-mini")
+    agent_model: str = os.getenv("AGENT_MODEL", "Qwen/Qwen3-VL-32B-Instruct")
+    agent_text_model: str = os.getenv("AGENT_TEXT_MODEL", "Qwen/Qwen3-30B-A3B-Instruct-2507")
+    agent_vision_model: str = os.getenv("AGENT_VISION_MODEL", agent_model)
     agent_timeout_seconds: int = int(os.getenv("AGENT_TIMEOUT_SECONDS", "60"))
     agent_enable_thinking: bool = os.getenv("AGENT_ENABLE_THINKING", "false").lower() in {"1", "true", "yes", "on"}
     agent_max_tokens: int = int(os.getenv("AGENT_MAX_TOKENS", "800"))

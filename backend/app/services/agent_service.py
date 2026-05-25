@@ -99,10 +99,11 @@ def _mock_sources(role_type: str) -> list[str]:
 async def _proxy_answer(db: Session, payload: AgentChatRequest) -> str:
     context = _build_context(db)
     system_prompt = _system_prompt(payload.role_type, context)
+    model = _select_agent_model(payload)
     url = settings.agent_api_base_url.rstrip("/") + "/chat/completions"
     headers = {"Authorization": f"Bearer {settings.agent_api_key}", "Content-Type": "application/json"}
     body = {
-        "model": settings.agent_model,
+        "model": model,
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": _build_user_content(db, payload)},
@@ -110,7 +111,7 @@ async def _proxy_answer(db: Session, payload: AgentChatRequest) -> str:
         "temperature": 0.2,
         "max_tokens": settings.agent_max_tokens,
     }
-    if _supports_enable_thinking(settings.agent_model):
+    if _supports_enable_thinking(model):
         body["enable_thinking"] = settings.agent_enable_thinking
     async with httpx.AsyncClient(timeout=settings.agent_timeout_seconds, trust_env=False) as client:
         response = await client.post(url, headers=headers, json=body)
@@ -126,6 +127,10 @@ def _build_user_content(db: Session, payload: AgentChatRequest) -> str | list[di
     content = [_attachment_to_content_part(db, attachment) for attachment in payload.attachments]
     content.append({"type": "text", "text": payload.question})
     return content
+
+
+def _select_agent_model(payload: AgentChatRequest) -> str:
+    return settings.agent_vision_model if payload.attachments else settings.agent_text_model
 
 
 def _attachment_to_content_part(db: Session, attachment: AgentAttachment) -> dict:

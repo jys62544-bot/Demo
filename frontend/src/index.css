@@ -285,6 +285,24 @@ a {
   border-color: rgba(148, 163, 184, 0.18);
 }
 
+.dashboard-card-dark .ant-card-body,
+.metric-card .ant-card-body {
+  color: #e2e8f0;
+}
+
+.dashboard-card-dark .ant-typography,
+.metric-card .ant-typography {
+  color: #e2e8f0;
+}
+
+.dashboard-card-dark .ant-typography-secondary,
+.dashboard-card-dark .ant-typography.ant-typography-secondary,
+.metric-card .ant-typography-secondary,
+.metric-card .ant-typography.ant-typography-secondary,
+.app-shell-admin .muted-small {
+  color: #94a3b8;
+}
+
 .metric-card .ant-statistic-content {
   color: #ffffff;
   font-family: "Fira Code", monospace;

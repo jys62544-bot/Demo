@@ -268,7 +268,7 @@ def test_agent_proxy_failure_falls_back_to_mock(monkeypatch):
     assert response.json()["mode"] == "mock_fallback"
 
 
-def test_agent_proxy_success_uses_configured_model_without_environment_proxy(monkeypatch):
+def test_agent_proxy_text_chat_uses_text_model_without_environment_proxy(monkeypatch):
     from app.services import agent_service
 
     captured_body = {}
@@ -302,6 +302,9 @@ def test_agent_proxy_success_uses_configured_model_without_environment_proxy(mon
     monkeypatch.setattr(agent_service.settings, "agent_api_key", "fake-key")
     monkeypatch.setattr(agent_service.settings, "agent_api_base_url", "https://api.siliconflow.cn/v1")
     monkeypatch.setattr(agent_service.settings, "agent_model", "Qwen/Qwen3-VL-32B-Instruct")
+    monkeypatch.setattr(agent_service.settings, "agent_text_model", "Qwen/Qwen3-30B-A3B-Instruct-2507")
+    monkeypatch.setattr(agent_service.settings, "agent_vision_model", "Qwen/Qwen3-VL-32B-Instruct")
+    monkeypatch.setattr(agent_service.settings, "agent_enable_thinking", False)
     monkeypatch.setattr(agent_service.settings, "agent_timeout_seconds", 3)
 
     response = client.post(
@@ -319,7 +322,7 @@ def test_agent_proxy_success_uses_configured_model_without_environment_proxy(mon
     data = response.json()
     assert data["mode"] == "proxy"
     assert data["answer"] == "proxy ok"
-    assert captured_body["model"] == "Qwen/Qwen3-VL-32B-Instruct"
+    assert captured_body["model"] == "Qwen/Qwen3-30B-A3B-Instruct-2507"
     assert "enable_thinking" not in captured_body
     assert captured_body["max_tokens"] == 800
 
@@ -355,6 +358,7 @@ def test_agent_proxy_sends_enable_thinking_for_supported_qwen3_text_model(monkey
     monkeypatch.setattr(agent_service.settings, "agent_api_key", "fake-key")
     monkeypatch.setattr(agent_service.settings, "agent_api_base_url", "https://api.siliconflow.cn/v1")
     monkeypatch.setattr(agent_service.settings, "agent_model", "Qwen/Qwen3-32B")
+    monkeypatch.setattr(agent_service.settings, "agent_text_model", "Qwen/Qwen3-32B")
     monkeypatch.setattr(agent_service.settings, "agent_enable_thinking", False)
     monkeypatch.setattr(agent_service.settings, "agent_max_tokens", 512)
 
@@ -407,6 +411,8 @@ def test_agent_proxy_sends_multimodal_image_url_parts(monkeypatch):
     monkeypatch.setattr(agent_service.settings, "agent_api_key", "fake-key")
     monkeypatch.setattr(agent_service.settings, "agent_api_base_url", "https://api.siliconflow.cn/v1")
     monkeypatch.setattr(agent_service.settings, "agent_model", "Qwen/Qwen3-VL-32B-Instruct")
+    monkeypatch.setattr(agent_service.settings, "agent_text_model", "Qwen/Qwen3-30B-A3B-Instruct-2507")
+    monkeypatch.setattr(agent_service.settings, "agent_vision_model", "Qwen/Qwen3-VL-32B-Instruct")
 
     response = client.post(
         "/api/agent/chat",
@@ -428,6 +434,8 @@ def test_agent_proxy_sends_multimodal_image_url_parts(monkeypatch):
 
     assert response.status_code == 200
     assert response.json()["mode"] == "proxy"
+    assert captured_body["model"] == "Qwen/Qwen3-VL-32B-Instruct"
+    assert "enable_thinking" not in captured_body
     user_message = captured_body["messages"][1]
     assert user_message["role"] == "user"
     assert user_message["content"] == [
