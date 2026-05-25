@@ -3,7 +3,7 @@ from datetime import timedelta
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.models import AgentMessage, UploadedFile, User
+from app.models import AbnormalCase, AgentMessage, ContributionScore, KnowledgeItem, UploadedFile, User
 from app.services.knowledge_service import build_abnormal_case, build_knowledge_item
 from app.services.score_service import build_contribution_score
 from app.time_utils import utc_now
@@ -37,7 +37,12 @@ ABNORMAL_SCENES = [
 
 
 def seed_database(db: Session) -> None:
-    if db.query(User).count() > 0:
+    existing_users = db.query(User).order_by(User.id).all()
+    if existing_users:
+        users = _sync_demo_users(db)
+        _sync_seed_uploads(db, users)
+        _sync_seed_agent_messages(db, users)
+        db.commit()
         return
 
     users = [User(**item) for item in USERS]
@@ -51,42 +56,29 @@ def seed_database(db: Session) -> None:
     db.commit()
 
 
+def _sync_demo_users(db: Session) -> list[User]:
+    users_by_username = {user.username: user for user in db.query(User).all()}
+    synced_users: list[User] = []
+    for item in USERS:
+        user = users_by_username.get(item["username"])
+        if user is None:
+            user = User(**item)
+            db.add(user)
+            db.flush()
+        else:
+            for key, value in item.items():
+                setattr(user, key, value)
+        synced_users.append(user)
+    db.flush()
+    return synced_users
+
+
 def _seed_uploads(db: Session, users: list[User]) -> None:
     now = utc_now()
     settings.upload_dir_path.mkdir(parents=True, exist_ok=True)
 
     for index in range(60):
-        uploader = [user for user in users if user.role == "employee"][index % 4]
-        device = DEVICES[index % len(DEVICES)]
-        process = PROCESSES[index % len(PROCESSES)]
-        is_abnormal = index % 4 == 1
-
-        if is_abnormal:
-            scene_type, file_type, suffix, risk_level = ABNORMAL_SCENES[(index // 4) % len(ABNORMAL_SCENES)]
-        else:
-            scene_type, file_type, suffix = NORMAL_SCENES[index % len(NORMAL_SCENES)]
-            risk_level = "none"
-
-        title = f"{device}{process}{suffix}{index + 1:02d}"
-        file_name, file_url, storage_key, text_content = _make_seed_file(index, title, file_type)
-        uploaded_file = UploadedFile(
-            title=title,
-            file_name=file_name,
-            file_type=file_type,
-            file_url=file_url,
-            storage_key=storage_key,
-            uploader_id=uploader.id,
-            uploader_name=uploader.name,
-            device_name=device,
-            process_name=process,
-            scene_type=scene_type,
-            is_abnormal=1 if is_abnormal else 0,
-            risk_level=risk_level,
-            tags=_tags_for(scene_type, device, process),
-            description=f"{device}在{process}环节的{suffix}，用于演示电力工厂运行、巡检、消缺和知识沉淀闭环。",
-            text_content=text_content,
-            created_at=now - timedelta(days=index % 10, hours=index % 7),
-        )
+        uploaded_file = UploadedFile(**_seed_upload_values(index, users, now))
         db.add(uploaded_file)
         db.flush()
 
@@ -98,12 +90,138 @@ def _seed_uploads(db: Session, users: list[User]) -> None:
         score.created_at = uploaded_file.created_at
         db.add(score)
 
-        if is_abnormal:
+        if bool(uploaded_file.is_abnormal):
             abnormal_case = build_abnormal_case(uploaded_file)
             abnormal_case.created_at = uploaded_file.created_at
             db.add(abnormal_case)
 
     db.commit()
+
+
+def _sync_seed_uploads(db: Session, users: list[User]) -> None:
+    now = utc_now()
+    settings.upload_dir_path.mkdir(parents=True, exist_ok=True)
+    seed_files = db.query(UploadedFile).order_by(UploadedFile.id).limit(60).all()
+
+    for index in range(60):
+        values = _seed_upload_values(index, users, now)
+        if index < len(seed_files):
+            uploaded_file = seed_files[index]
+            for key, value in values.items():
+                if key == "created_at" and uploaded_file.created_at:
+                    continue
+                setattr(uploaded_file, key, value)
+        else:
+            uploaded_file = UploadedFile(**values)
+            db.add(uploaded_file)
+            db.flush()
+
+        _sync_knowledge_item(db, uploaded_file)
+        _sync_contribution_score(db, uploaded_file)
+        if bool(uploaded_file.is_abnormal):
+            _sync_abnormal_case(db, uploaded_file)
+
+
+def _seed_upload_values(index: int, users: list[User], now) -> dict:
+    uploader = [user for user in users if user.role == "employee"][index % 4]
+    device = DEVICES[index % len(DEVICES)]
+    process = PROCESSES[index % len(PROCESSES)]
+    is_abnormal = index % 4 == 1
+
+    if is_abnormal:
+        scene_type, file_type, suffix, risk_level = ABNORMAL_SCENES[(index // 4) % len(ABNORMAL_SCENES)]
+    else:
+        scene_type, file_type, suffix = NORMAL_SCENES[index % len(NORMAL_SCENES)]
+        risk_level = "none"
+
+    title = f"{device}{process}{suffix}{index + 1:02d}"
+    file_name, file_url, storage_key, text_content = _make_seed_file(index, title, file_type)
+    return {
+        "title": title,
+        "file_name": file_name,
+        "file_type": file_type,
+        "file_url": file_url,
+        "storage_key": storage_key,
+        "uploader_id": uploader.id,
+        "uploader_name": uploader.name,
+        "device_name": device,
+        "process_name": process,
+        "scene_type": scene_type,
+        "is_abnormal": 1 if is_abnormal else 0,
+        "risk_level": risk_level,
+        "tags": _tags_for(scene_type, device, process),
+        "description": f"{device}在{process}环节的{suffix}，用于演示电力工厂运行、巡检、消缺和知识沉淀闭环。",
+        "text_content": text_content,
+        "created_at": now - timedelta(days=index % 10, hours=index % 7),
+    }
+
+
+def _sync_knowledge_item(db: Session, uploaded_file: UploadedFile) -> None:
+    values = build_knowledge_item(uploaded_file)
+    knowledge = (
+        db.query(KnowledgeItem)
+        .filter(KnowledgeItem.source_file_id == uploaded_file.id)
+        .first()
+    )
+    if knowledge is None:
+        knowledge = values
+        knowledge.created_at = uploaded_file.created_at
+        db.add(knowledge)
+        return
+    for key in [
+        "title",
+        "knowledge_type",
+        "source_file_id",
+        "device_name",
+        "process_name",
+        "contributor_id",
+        "contributor_name",
+        "tags",
+        "summary",
+    ]:
+        setattr(knowledge, key, getattr(values, key))
+
+
+def _sync_contribution_score(db: Session, uploaded_file: UploadedFile) -> None:
+    values = build_contribution_score(uploaded_file)
+    score = (
+        db.query(ContributionScore)
+        .filter(ContributionScore.related_file_id == uploaded_file.id)
+        .first()
+    )
+    if score is None:
+        score = values
+        score.created_at = uploaded_file.created_at
+        db.add(score)
+        return
+    for key in ["user_id", "user_name", "action_type", "points", "related_file_id", "description"]:
+        setattr(score, key, getattr(values, key))
+
+
+def _sync_abnormal_case(db: Session, uploaded_file: UploadedFile) -> None:
+    values = build_abnormal_case(uploaded_file)
+    abnormal_case = (
+        db.query(AbnormalCase)
+        .filter(AbnormalCase.source_file_id == uploaded_file.id)
+        .first()
+    )
+    if abnormal_case is None:
+        abnormal_case = values
+        abnormal_case.created_at = uploaded_file.created_at
+        db.add(abnormal_case)
+        return
+    for key in [
+        "source_file_id",
+        "title",
+        "device_name",
+        "process_name",
+        "risk_level",
+        "uploader_id",
+        "uploader_name",
+        "description",
+        "ai_suggestion",
+    ]:
+        setattr(abnormal_case, key, getattr(values, key))
 
 
 def _make_seed_file(index: int, title: str, file_type: str) -> tuple[str | None, str | None, str | None, str | None]:
@@ -157,3 +275,34 @@ def _seed_agent_messages(db: Session, users: list[User]) -> None:
                 created_at=utc_now() - timedelta(days=index % 7),
             )
         )
+
+
+def _sync_seed_agent_messages(db: Session, users: list[User]) -> None:
+    messages = db.query(AgentMessage).order_by(AgentMessage.id).limit(12).all()
+    roles = [
+        "training_assistant",
+        "operation_qa",
+        "abnormal_alert",
+        "quality_supervisor",
+        "management_decision",
+    ]
+    for index in range(12):
+        user = users[index % len(users)]
+        values = {
+            "user_id": user.id,
+            "role_type": roles[index % len(roles)],
+            "question": f"电力巡检演示问题 {index + 1}",
+            "answer": "这是用于大屏统计的电力工厂历史 Agent mock 对话。",
+            "mode": "mock",
+        }
+        if index < len(messages):
+            message = messages[index]
+            for key, value in values.items():
+                setattr(message, key, value)
+        else:
+            db.add(
+                AgentMessage(
+                    **values,
+                    created_at=utc_now() - timedelta(days=index % 7),
+                )
+            )

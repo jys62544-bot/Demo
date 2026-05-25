@@ -17,7 +17,8 @@ main = importlib.import_module("main")
 
 from fastapi.testclient import TestClient  # noqa: E402
 from app.database import SessionLocal  # noqa: E402
-from app.models import User  # noqa: E402
+from app.models import KnowledgeItem, UploadedFile, User  # noqa: E402
+from app.seed import seed_database  # noqa: E402
 
 
 client = TestClient(main.app)
@@ -70,6 +71,44 @@ def test_demo_access_key_login_works_with_existing_legacy_password_rows():
     finally:
         user.password = original_password
         db.commit()
+        db.close()
+
+
+def test_seed_database_syncs_existing_legacy_demo_rows():
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.username == "employee").one()
+        user.password = "123456"
+        user.department = "一号产线"
+        user.position = "设备操作员"
+
+        first_file = db.query(UploadedFile).order_by(UploadedFile.id).first()
+        first_file.title = "设备A开机检查标准作业流程01"
+        first_file.device_name = "设备A"
+        first_file.process_name = "开机检查"
+        first_file.description = "设备A在开机检查环节的标准作业流程，用于演示数据沉淀闭环。"
+        first_knowledge = (
+            db.query(KnowledgeItem)
+            .filter(KnowledgeItem.source_file_id == first_file.id)
+            .one()
+        )
+        first_knowledge.title = "设备A - 开机检查 - 设备A开机检查标准作业流程01"
+        db.commit()
+
+        seed_database(db)
+        db.refresh(user)
+        db.refresh(first_file)
+        db.refresh(first_knowledge)
+
+        assert user.password == "Demo@2026#IM-Safe"
+        assert user.department == "集控运行一值"
+        assert user.position == "巡检操作员"
+        assert first_file.title == "1号主变压器红外测温巡检标准倒闸操作视频01"
+        assert first_file.device_name == "1号主变压器"
+        assert first_file.process_name == "红外测温巡检"
+        assert "电力工厂运行、巡检、消缺和知识沉淀闭环" in first_file.description
+        assert first_knowledge.title == "1号主变压器 - 红外测温巡检 - 1号主变压器红外测温巡检标准倒闸操作视频01"
+    finally:
         db.close()
 
 
