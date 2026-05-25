@@ -10,6 +10,9 @@ def build_knowledge_item(uploaded_file: UploadedFile) -> KnowledgeItem:
         f"{uploaded_file.file_type} 数据，关联设备为 {uploaded_file.device_name}，"
         f"关联工序为 {uploaded_file.process_name}，标签为 {tags}。"
     )
+    if uploaded_file.text_content:
+        excerpt = uploaded_file.text_content[:160]
+        summary = f"{summary} 文档摘录：{excerpt}"
     return KnowledgeItem(
         title=f"{uploaded_file.device_name} - {uploaded_file.process_name} - {uploaded_file.title}",
         knowledge_type=knowledge_type,
