@@ -644,6 +644,11 @@ a {
   color: #dbeafe;
 }
 
+.app-shell-admin .agent-markdown,
+.app-shell-admin .agent-markdown :where(p, li, strong, em, h1, h2, h3, h4, blockquote, table, thead, tbody, tr, th, td, span, code) {
+  color: #ffffff !important;
+}
+
 .suggestion-list {
   display: flex;
   flex-wrap: wrap;
