@@ -38,8 +38,9 @@ async def upload(
     file_name = None
     file_url = None
     storage_key = None
+    extracted_text = None
     if file_type != "text" and file is not None:
-        file_name, file_url, storage_key = await save_upload_file(file)
+        file_name, file_url, storage_key, extracted_text = await save_upload_file(file)
 
     uploaded_file = UploadedFile(
         title=title,
@@ -56,7 +57,7 @@ async def upload(
         risk_level=normalized_risk,
         tags=tags,
         description=description,
-        text_content=text_content if file_type == "text" else None,
+        text_content=text_content if file_type == "text" else extracted_text,
     )
     db.add(uploaded_file)
     db.flush()

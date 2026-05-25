@@ -136,6 +136,39 @@ def test_text_upload_does_not_require_file_and_generates_knowledge():
     assert data["score_added"] == 10
 
 
+def test_text_like_document_upload_extracts_content_into_database():
+    document_text = "设备A安全锁检查规范\n1. 开机前确认安全锁闭合。\n2. 异常时通知班组长。"
+    response = client.post(
+        "/api/upload",
+        headers=auth_headers(),
+        data={
+            "title": "设备A安全锁检查规范",
+            "file_type": "document",
+            "device_name": "设备A",
+            "process_name": "开机检查",
+            "scene_type": "standard_operation",
+            "is_abnormal": "0",
+            "risk_level": "none",
+            "tags": "安全锁,SOP,开机",
+            "description": "文本型文档应提取正文用于知识沉淀",
+        },
+        files={"file": ("safety-lock.md", document_text.encode("utf-8"), "text/markdown")},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["file"]["file_type"] == "document"
+    assert data["file"]["file_url"].startswith("/uploads/")
+    assert "开机前确认安全锁闭合" in data["file"]["text_content"]
+    assert "文档摘录" in data["knowledge_item"]["summary"]
+    assert "开机前确认安全锁闭合" in data["knowledge_item"]["summary"]
+
+    files = client.get("/api/files?keyword=安全锁", headers=auth_headers()).json()
+    matched = [item for item in files["items"] if item["id"] == data["file"]["id"]]
+    assert matched
+    assert "异常时通知班组长" in matched[0]["text_content"]
+
+
 def test_dashboard_ranking_graph_and_agent_shapes_are_frontend_ready():
     recent = client.get("/api/dashboard/recent-uploads?limit=5", headers=auth_headers("admin"))
     assert recent.status_code == 200
