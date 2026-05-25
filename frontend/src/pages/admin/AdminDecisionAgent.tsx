@@ -1,5 +1,5 @@
 import { InboxOutlined, RobotOutlined, SendOutlined } from "@ant-design/icons";
-import { Button, Card, Input, Segmented, Space, Tag, Typography, Upload } from "antd";
+import { Alert, Button, Card, Input, Segmented, Space, Spin, Tag, Typography, Upload, message } from "antd";
 import type { UploadFile } from "antd";
 import { useState } from "react";
 import { api } from "../../api/client";
@@ -10,16 +10,27 @@ export default function AdminDecisionAgent() {
   const [roleType, setRoleType] = useState<AgentRoleType>("management_decision");
   const [question, setQuestion] = useState("最近哪个工序异常最多？");
   const [answer, setAnswer] = useState<AgentChatResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [loading, setLoading] = useState(false);
 
   const ask = async () => {
+    const text = question.trim();
+    if (!text) {
+      message.warning("请输入问题");
+      return;
+    }
     setLoading(true);
+    setError(null);
     try {
       const attachments = await Promise.all(fileList.map(uploadAgentAttachment));
-      const data = await api.agentChat(roleType, question, { attachments });
+      const data = await api.agentChat(roleType, text, { attachments });
       setAnswer(data);
       setFileList([]);
+    } catch (requestError) {
+      const text = requestError instanceof Error ? requestError.message : "Agent 调用失败";
+      setError(text);
+      message.error("Agent 决策暂时没有返回，请稍后重试");
     } finally {
       setLoading(false);
     }
@@ -57,22 +68,29 @@ export default function AdminDecisionAgent() {
           </Button>
         </Space>
       </Card>
-      {answer ? (
-        <Card className="dashboard-card-dark section-spacing" title={<><RobotOutlined /> Agent 结果</>}>
-          <Typography.Paragraph>{answer.answer}</Typography.Paragraph>
-          <Space wrap>
-            <Tag color={answer.mode === "proxy" ? "green" : "blue"}>{answer.mode}</Tag>
-            {answer.sources.map((source) => (
-              <Tag key={source}>{source}</Tag>
-            ))}
-          </Space>
-          <div className="agent-suggestions">
-            {answer.suggestions.map((item) => (
-              <div key={item}>{item}</div>
-            ))}
-          </div>
-        </Card>
-      ) : null}
+      <Card className="dashboard-card-dark section-spacing" title={<><RobotOutlined /> Agent 结果</>}>
+        <Spin spinning={loading} tip="Agent 正在生成结果，外部模型可能需要 10-30 秒">
+          {error ? <Alert type="error" showIcon message="调用失败" description={error} /> : null}
+          {answer ? (
+            <>
+              <Typography.Paragraph>{answer.answer}</Typography.Paragraph>
+              <Space wrap>
+                <Tag color={answer.mode === "proxy" ? "green" : "blue"}>{answer.mode}</Tag>
+                {answer.sources.map((source) => (
+                  <Tag key={source}>{source}</Tag>
+                ))}
+              </Space>
+              <div className="agent-suggestions">
+                {answer.suggestions.map((item) => (
+                  <div key={item}>{item}</div>
+                ))}
+              </div>
+            </>
+          ) : !error ? (
+            <Alert type="info" showIcon message="结果会显示在这里" description="点击“生成决策建议”后等待 Agent 返回。" />
+          ) : null}
+        </Spin>
+      </Card>
     </AppShell>
   );
 }

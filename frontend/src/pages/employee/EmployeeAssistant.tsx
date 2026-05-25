@@ -1,5 +1,5 @@
 import { InboxOutlined, MessageOutlined, SendOutlined } from "@ant-design/icons";
-import { Button, Card, Input, Segmented, Space, Tag, Typography, Upload } from "antd";
+import { Alert, Button, Card, Input, Segmented, Space, Spin, Tag, Typography, Upload, message } from "antd";
 import type { UploadFile } from "antd";
 import { useState } from "react";
 import { api } from "../../api/client";
@@ -10,16 +10,27 @@ export default function EmployeeAssistant() {
   const [roleType, setRoleType] = useState<AgentRoleType>("operation_qa");
   const [question, setQuestion] = useState("设备A开机检查前应该重点确认哪些风险？");
   const [answer, setAnswer] = useState<AgentChatResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [loading, setLoading] = useState(false);
 
   const ask = async () => {
+    const text = question.trim();
+    if (!text) {
+      message.warning("请输入问题");
+      return;
+    }
     setLoading(true);
+    setError(null);
     try {
       const attachments = await Promise.all(fileList.map(uploadAgentAttachment));
-      const data = await api.agentChat(roleType, question, { attachments });
+      const data = await api.agentChat(roleType, text, { attachments });
       setAnswer(data);
       setFileList([]);
+    } catch (requestError) {
+      const text = requestError instanceof Error ? requestError.message : "Agent 调用失败";
+      setError(text);
+      message.error("AI 助手暂时没有返回，请稍后重试");
     } finally {
       setLoading(false);
     }
@@ -57,22 +68,29 @@ export default function EmployeeAssistant() {
           </Button>
         </Space>
       </Card>
-      {answer ? (
-        <Card className="section-spacing" title={<><MessageOutlined /> 回答</>}>
-          <Typography.Paragraph>{answer.answer}</Typography.Paragraph>
-          <Space wrap>
-            <Tag color="green">{answer.mode}</Tag>
-            {answer.sources.map((source) => (
-              <Tag key={source}>{source}</Tag>
-            ))}
-          </Space>
-          <div className="agent-suggestions employee-suggestions">
-            {answer.suggestions.map((item) => (
-              <div key={item}>{item}</div>
-            ))}
-          </div>
-        </Card>
-      ) : null}
+      <Card className="section-spacing" title={<><MessageOutlined /> 回复</>}>
+        <Spin spinning={loading} tip="AI 正在生成回复，外部模型可能需要 10-30 秒">
+          {error ? <Alert type="error" showIcon message="调用失败" description={error} /> : null}
+          {answer ? (
+            <>
+              <Typography.Paragraph>{answer.answer}</Typography.Paragraph>
+              <Space wrap>
+                <Tag color={answer.mode === "proxy" ? "green" : "blue"}>{answer.mode}</Tag>
+                {answer.sources.map((source) => (
+                  <Tag key={source}>{source}</Tag>
+                ))}
+              </Space>
+              <div className="agent-suggestions employee-suggestions">
+                {answer.suggestions.map((item) => (
+                  <div key={item}>{item}</div>
+                ))}
+              </div>
+            </>
+          ) : !error ? (
+            <Alert type="info" showIcon message="回复会显示在这里" description="点击“询问 AI 助手”后等待生成结果。" />
+          ) : null}
+        </Spin>
+      </Card>
     </AppShell>
   );
 }

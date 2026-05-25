@@ -7,6 +7,7 @@ export interface Env {
   AGENT_MODEL?: string;
   AGENT_TIMEOUT_SECONDS?: string;
   CORS_ORIGINS?: string;
+  CORS_ORIGIN_SUFFIXES?: string;
 }
 
 type User = {
@@ -223,7 +224,14 @@ function corsHeaders(request: Request, env: Env): Record<string, string> {
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean);
-  const origin = allowed.includes(requestOrigin) ? requestOrigin : allowed[0] ?? "*";
+  const allowedSuffixes = (env.CORS_ORIGIN_SUFFIXES ?? "")
+    .split(",")
+    .map((suffix) => suffix.trim())
+    .filter(Boolean);
+  const origin =
+    allowed.includes(requestOrigin) || allowedSuffixes.some((suffix) => requestOrigin.endsWith(suffix))
+      ? requestOrigin
+      : allowed[0] ?? "*";
   return {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Credentials": "true",

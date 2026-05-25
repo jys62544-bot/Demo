@@ -9,6 +9,7 @@ AGENT_API_BASE_URL = "https://api.siliconflow.cn/v1"
 AGENT_MODEL = "Qwen/Qwen3-VL-32B-Instruct"
 AGENT_TIMEOUT_SECONDS = "60"
 CORS_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,https://industrial-demo-frontend.pages.dev"
+CORS_ORIGIN_SUFFIXES = ".industrial-demo-frontend.pages.dev"
 
 [[d1_databases]]
 binding = "DB"

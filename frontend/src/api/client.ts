@@ -32,6 +32,7 @@ import {
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
 const FORCE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
+const AGENT_TIMEOUT_MS = Number(import.meta.env.VITE_AGENT_TIMEOUT_MS || 70000);
 
 const client = axios.create({
   baseURL: `${API_BASE_URL}/api`,
@@ -247,7 +248,7 @@ export const api = {
         const response = await client.post<AgentChatResponse>(
           "/agent/chat",
           { role_type: roleType, question, context: options?.context || {}, attachments: options?.attachments || [] },
-          { headers: authHeader() },
+          { headers: authHeader(), timeout: AGENT_TIMEOUT_MS },
         );
         return response.data;
       },
