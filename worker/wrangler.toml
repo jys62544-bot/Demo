@@ -1,0 +1,21 @@
+name = "industrial-demo-api"
+main = "src/index.ts"
+compatibility_date = "2026-05-25"
+
+[vars]
+APP_ENV = "production"
+AGENT_MODE = "proxy"
+AGENT_API_BASE_URL = "https://api.siliconflow.cn/v1"
+AGENT_MODEL = "Qwen/Qwen3-VL-32B-Instruct"
+AGENT_TIMEOUT_SECONDS = "60"
+CORS_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "industrial-demo-db"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "UPLOAD_BUCKET"
+bucket_name = "industrial-demo-uploads"
